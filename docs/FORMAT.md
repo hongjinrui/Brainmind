@@ -1,175 +1,96 @@
-# BRZ 离线编辑格式记录
+# BRZ 格式与操作约束
 
-本文记录仓库样本和随包 TheBrain 14 文档中可核对的事实。这里的 coding 指通过代码维护脑图的能力，不要求存在名为 `coding-base` 的文件。
-
-**当前状态：实验性的 BRZ 创建和离线编辑。11 项编辑演示及无底稿创建的 38 节点作品已在 TheBrain 14.0.102.0 中通过导入、重开和再导出的语义核对；其他输入仍需单独验收。** 结构校验本身不能证明原应用兼容。没有恢复软件源代码，也没有确认用户电脑上所谓 `.dll` 脑图存储的格式。
+本工具处理 `ExchangeFormatVersion=5` 的已研究结构。TheBrain 14.0.102.0 的应用验证范围见 [VALIDATION.md](VALIDATION.md)。以下规则约束写入；未知字段和未修改内容保持原样。
 
 ## 无底稿创建
 
-`create --content content.json [--output new.brz]` 直接从内容构建 BRZ v5，不读取已有 BRZ，也不需要 TheBrain 正在运行。省略 `--output` 只在内存中预演；写出复用已有发布前重读验证和禁止覆盖逻辑。输入内容保留不变，报告绑定 `content_sha256`；不存在输入 BRZ，因此不要求 `source_sha256`。以后编辑生成文件时，仍需用实际文件 SHA-256 绑定 `apply` 计划。
+`create --content content.json [--output new.brz]` 从内容构建新归档，无需输入 BRZ。省略 `--output` 只预演；写出时禁止覆盖并重新读入校验。输入 JSON 保持不变，报告包含 `content_sha256`、`node_ids`（内容 key → UUID）及 `root_ids`。
 
-内容 JSON 的 `nodes` 为 1–10000 个对象，每个节点具有唯一非空字符串 `key` 和非空 `name`，可选 `note`（Markdown 字符串）、`label`、有符号 32 位 `background_color`。`parent_key` 省略或为 `null` 时不声明父关系，否则引用父节点 key；也可用 `edges` 添加其他父关系。`jumps` 中元素为 `a`、`b`，`edges` 中元素另需 `relation` 为 `parent` 或 `jump`；二者都可带说明性 `reason`。端点必须存在，父子允许多父但拒绝环；重复关系及自连接拒绝。所有新节点均为普通 `Kind=1`；类型和标签可在生成后通过受支持的编辑操作设置。
+内容结构：
 
-可选 `schema_version` 必须为整数 `1`。顶层 `title` 用作脑图名称，省略时取第一个根节点名称。顶层的 `subtitle`、`created_at`、`author`、`source`、`design`，节点的 `category`、`source_pages`、`source_pdf_page` 以及关系 `reason` 是兼容示例的辅助信息，不自动写入原应用字段；需要展示的来源和说明应包含在 `note`。未知键拒绝，避免拼错字段后静默丢失内容。PDF 提取与知识组织由调用者完成，CLI 不直接解析 PDF。新建仍受合计 10000 项编辑操作上限约束，每个节点、一次样式设置、每条关系和每份笔记各计一项。
-
-创建器分配新的 UUID v4 作为脑图、节点、连线和附件身份，使用现有创建规则写节点、关系及笔记。归档提供 v5 元数据和已知表；访问、用户、同步、历史等表为空，不复制其他人的账号或历史记录。`settings` 只写脑图名称及首个根节点作为主页的两项最小设置。返回的 `node_ids` 是内容 key 到 UUID 的映射，`root_ids` 给出没有父关系的节点。预演与实际执行重新生成 UUID 和时间戳，二进制摘要不同是预期行为。
-
-最小设置的依据来自官方程序集静态检查及六份原生导出：`BrainSettingKey` 的名称为 19、主页节点为 20，设置 ID 为 `uuid5(BrainId, str(枚举整数))`。`TheBrainCore` MethodDef 1819 将枚举转成十进制字符串并调用 `TheBrain.Sys` MethodDef 76；后者按 UTF-8、SHA-1、namespace GUID 的 RFC 字节序及版本/variant 位生成 UUID v5。该计算与五份原样本及原生空白导出的 19/20 两项 ID 均吻合，因此新建时根据新 BrainId 计算设置 ID。原生试错还发现：设置全空的归档虽可导入，却在打开时出现 `textToFormat` 为空错误；最低名称/主页设置不可省略。此规则不改变已有实体的 UUID，也不复制底稿设置。
-
-新建入口已对修正后的 3 节点小样例和 38 节点 NIST 作品单独做原应用验证，范围见 [VALIDATION.md](VALIDATION.md#无底稿创建与独立-skill-包)。每次 `create` 使用新脑图身份，首次导入可选择创建新脑图；继续维护同一作品应使用 `apply`。最小输入见 [example.content.json](../skills/brz-edit/references/example.content.json)。
-
-## 证据范围
-
-四卷 `Brainmind.7z.001` 至 `.004` 按编号拼接后解压，相关文件在 `TheBrain14 - v2/`。样本如下：
-
-| BRZ 文件 | thoughts | links | attachments |
-| --- | ---: | ---: | ---: |
-| `elon 2025-03-21.brz` | 68 | 126 | 58 |
-| `test2 2025-03-21.brz` | 2 | 1 | 1 |
-| `test2 2025-03-21 (1).brz` | 14 | 15 | 8 |
-| `5G技术 2025-06-19 (1).brz` | 40 | 58 | 14 |
-| `AIGC 2025-09-22.brz` | 163 | 199 | 60 |
-
-下文的文件名和行号指 **BRZ 内成员**；解码时使用 `utf-8-sig`，行号从 1 开始。它们不是仓库中另存的同名 JSON 文件。
-
-随包 `TheBrain14-User-Guide-v01.pdf` 印刷页 247–248（PDF 物理页 254–255）介绍备份为 BRZ；p248 明确警告：
-
-> Brain Archive files are NOT .zip files. You should not use zip file utilities to modify or access your archive files as doing so may corrupt them.
-
-本仓库五份 BRZ 的实际字节可被 Python ZIP 读取，且含明文记录和附件。这只证明这些样本的容器布局，不能推广到所有版本，也不能据此视为官方支持的编辑接口。编辑始终输出副本，原始压缩卷和原 BRZ 保持不变。
-
-## 容器与记录
-
-所有样本 `meta.json` 的 `ExchangeFormatVersion` 都是 `5`。`meta.json` 是单个 JSON 对象，包含 `BrainId` 和可能存在的 `AttachmentFileStates`。
-
-以下文件是逐行 JSON（NDJSON），**不是 JSON 数组**：
-
-```text
-thoughts.json       links.json          attachments.json
-settings.json       modificationlogs.json
-brainusers.json     syncpoints.json     tombstones.json
-calendarevents.json access.json
-fielddefinitions.json                  fieldinstances.json
-```
-
-样本通常带 UTF-8 BOM，记录以换行分隔；空表仅有 BOM。应保留源文件的 BOM、换行风格和未修改记录的原始字节。不要把空表改写成 `[]` 或 `{}`。
-
-普通实体使用 `Id`、`BrainId` 及创建/修改时间；部分记录还含 `SyncUpdateDateTime`、`SyncSentId`。后两者与同步有关，现有分析不足以实现云同步协议。日志、同步点、墓碑和访问控制表保留原状，不伪造应用历史。
-
-TheBrain 14.0.102.0 原生再导出的 `access.json` 出现没有 `Id` 的记录，仅有 `BrainId`、`AccessorId`、`AccessType`。这种记录按 `(BrainId, AccessorId)` 复合键校验唯一性和比较，`AccessType` 必须为整数；`BrainId` 仍须匹配归档。已有带 `Id` 的记录沿用 UUID 键。工具保留权限记录，不创建或修改权限，也不伪造 `Id` 使其满足旧校验器。
-
-## 节点及 UUID
-
-`thoughts.json` 保存节点本身，不在节点对象中列出父子 UUID。常见字段：
-
-| 字段 | 样本含义与处理 |
+| 字段 | 约束 |
 | --- | --- |
-| `Id` | 节点 UUID，也是笔记和图标目录名；修改名称不改变此值 |
-| `Name` | 显示名称；可能重复，不能充当唯一键 |
-| `Kind` | 节点类别，见下表 |
-| `TypeId` | 类型节点的 UUID；普通节点分配和类型层级的关系编码不同，见下节 |
-| `TagIds` | 所有样本均为空数组；不能仅靠写此数组实现标签 |
-| `Label` | 标签文字字段；与作为分类节点的 Tag 不同 |
-| `BackgroundColor` | 样本有符号 32 位颜色整数 |
-| `ThoughtIconInfo` | 七段状态串；已确认笔记标记等部分语义，仅修改受支持的字段，见下文 |
-| `ForgottenDateTime` | 部分样本存在的遗忘标记；不是删除指令 |
+| `nodes` | 非空数组；每项必需唯一非空 `key` 和非空 `name` |
+| 节点 `parent_key` | 可省略或为 `null`；否则引用父节点的 key |
+| 节点 `note` | 可选 Markdown 字符串，包含读者需要看到的来源与页码 |
+| 节点 `label`、`background_color` | 可选标签文字、有符号 32 位 ARGB 整数 |
+| `jumps` | 可选数组，元素为 `a`、`b` 两个节点 key，可附 `reason` |
+| `edges` | 可选数组，元素含 `a`、`b`、`relation`（`parent` 或 `jump`），可附 `reason`；支持多父 |
+| `title` | 可选脑图名称，默认第一个根节点名称；该根节点也作为主页 |
+| `schema_version` | 可选，提供时必须为整数 `1` |
 
-官方安装包内 `TheBrainCore.dll` 的枚举元数据给出 `ThoughtKind`：`Undefined=0`、`Normal=1`、`Type=2`、`Event=3`、`Tag=4`、`System=5`。样本同时印证 `Normal/Type/Tag/System`；没有据此实现 Event 创建。
+端点必须存在，重复关系、自连接和父子环会被拒绝。每项节点创建、样式设置、关系或笔记各占一项操作，合计最多 10000 项。未知键拒绝。兼容的辅助字段为顶层 `subtitle`、`created_at`、`author`、`source`、`design`，节点 `category`、`source_pages`、`source_pdf_page` 和关系 `reason`；这些不会自动显示在应用中，需要展示的内容应写入 `note`。
 
-进一步静态复核官方创建路径，确认新类型节点默认 `Label=Name`，新标签的 `ThoughtIconInfo` 为 `8::0:False:False:0:`；普通/类型节点默认前缀为 `1`。新节点直接使用 `Guid.NewGuid`，支持工具使用 UUID v4。方法编号、指令偏移和复现脚本见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md)。
+新脑图、普通节点、连线和附件使用新的 UUID v4。`settings` 仅写脑图名称和主页：`BrainSettingKey` 分别为 19、20，设置 ID 按 `uuid5(BrainId, str(枚举整数))` 计算。该规则经官方程序集静态分析及六份原生导出交叉核对；缺少名称设置的归档可能导入后无法打开，因此不能省略。用户、权限、同步和历史表初始为空。
 
-例：`test2 2025-03-21 (1).brz/thoughts.json:4` 是“加法”，UUID 为 `3ff111a6-fd5e-44eb-8e76-e58a475b8370`，`TypeId` 指向第 6 行“已学” `68a53d65-bb6e-4d9d-847c-f88f71f1e8ae`；第 14 行是系统节点 `Pinned`。
+预演与写出各自生成 UUID 和时间戳，摘要不必相同。`create` 用于新作品；继续编辑现有作品使用 `apply`，保留身份。最小内容见 [example.content.json](../skills/brz-edit/references/example.content.json)。
 
-样本含 UUID v4 和 v5。`AIGC` 的 163 个节点中 162 个是 v4，`5G技术` 的 40 个节点均为 v5。v4 通常用于随机生成，v5 是由 namespace 和名字计算的标准形式；**现有材料未确定该应用使用的 v5 namespace 或输入**。不得从显示名称重算已有 UUID。新实体使用不重复的 UUID v4，并保留所有已有引用。
+## 编辑计划
 
-颜色可按常见 ARGB 32 位形式理解；例如“已学”的 `BackgroundColor=-16728064` 对应无符号十六进制 `FF00C000`。演示节点的 `BackgroundColor=-256` 已在 TheBrain 14.0.102.0 中显示为黄色；其他颜色、继承和透明度效果未穷尽验证。`ForegroundColor` 没有本批样本值，工具不支持修改前景色。
+`apply input.brz --plan edit.json [--output edited.brz]` 的计划顶层只允许 `source_sha256` 与 `operations`。摘要必须对应实际输入文件，操作按数组顺序执行；先创建节点再引用。计划失败时回退，输入文件不改，输出必须是另一个未存在的路径。
 
-## 关系：一份 links 表表达多种含义
+| `op` | 参数与范围 |
+| --- | --- |
+| `update_thought` | `id`、`set`；只允许 `Name`、`Label`、`BackgroundColor` |
+| `add_thought` | `name`，可选 `id`、`kind`；Kind 为 1、2、4，默认 1 |
+| `add_link` | `a`、`b`、`relation`（`parent`/`jump`），可选 `id`；两端为普通节点 |
+| `remove_link` | `id`；仅普通父子/跳转，不能删除带附属内容的连线 |
+| `set_type` | `id`（普通节点）、`type_id`（类型 UUID，或 `null` 清除） |
+| `set_tag` | `id`（普通节点）、`tag_id`、布尔 `present` |
+| `set_note` | `id`（普通节点）、`text`（完整 Markdown，替换整份笔记） |
+| `reuse_icon` | `id`、`from_id`；受限的同类已有图标复用，见下文 |
+| `update_field` | 已有字段实例 `id`、数值 `value`；只支持 Integer/Decimal |
 
-每条 link 有 `Id`、`ThoughtIdA`、`ThoughtIdB`、`Kind`、`Relation`、`Direction`、`Meaning`、`Thickness` 及时间戳。必须综合 `Relation` 与 `Meaning`，不能把所有关系都当父子树。
+未知参数拒绝。新记录可省略 `id` 自动生成；需要在后续操作引用时先分配 UUID v4。同名节点不合并，已有 UUID v4/v5 均不重算。重复设置相同类型或标签为无变更操作。更换类型会丢失连线样式或未知字段时拒绝执行。
 
-| 用途 | `Relation` | `Meaning` | A → B | 可复查证据 |
-| --- | ---: | ---: | --- | --- |
-| 普通父子 | 1 | 1 | 父 → 子 | `test2 (1)/links.json:2`：“学习路线demo”→“加法” |
-| 跳转 / 联系 | 3 | 1 | 两端联系；不要解释为父子 | `5G技术/links.json:1`：“物联网”→“多用户” |
-| 类型分配 | 1 | 2 | 类型 → 普通节点 | `test2 (1)/links.json:14`：“已学”→“加法” |
-| 类型层级 | 1 | 3 | 上级类型 → 下级类型 | `elon/links.json:95`：“Tutorial”→“Tutorial Video” |
-| 标签分配 | 1 | 5 | 标签 → 被标记节点 | `5G技术` 的“感知”→“情境感知” |
-| 固定 | 1 | 6 | Pinned → 被固定节点 | `test2 (1)/links.json:9`：“Pinned”→“已学” |
+## 容器、身份和关系
 
-表中缩写 `test2 (1)`、`5G技术` 和 `elon` 分别指上文完整 BRZ 文件名。上述用途是根据样本节点类别、`TypeId` 和已知学习路线交叉核对得到的解释；应用内部 `Relation/Meaning` 的完整枚举尚未恢复。样本中还出现其他 `Meaning`，应原样保留。
+归档可作为 ZIP 读取；`meta.json` 为单对象，其他已知表是 UTF-8 NDJSON，通常带 BOM，空表可能只有 BOM。保留 BOM、换行风格、未知 ZIP 成员及未改记录的原始字节。`meta.AttachmentFileStates` 按附件 ID 登记，不是节点 ID。
 
-全部样本 link 的 `Direction=-1`、`Kind=1`、`Thickness=-1`。因此 `Direction` 不能直接用于判断“父”还是“子”。添加普通父子关系时用 A 父 B 子，查找某节点的父节点时反向查询 B；跳转联系需查两端。脑图是图而非单父树，一个节点可以有多个父节点。
+普通实体按 `Id` 唯一，`BrainId` 须与归档一致。原生 `access.json` 可没有 `Id`，此时按 `(BrainId, AccessorId)` 复合键校验与比较，`AccessType` 必须为整数。权限记录只保留，不伪造 ID 或权限。
 
-对普通 `Kind=1` 节点使用 `set_type` 时，必须同时维护其 `TypeId` 和 `Meaning=2` 关系，不能只改一方。类型节点也可能有 `TypeId`：`elon 2025-03-21.brz/thoughts.json:28` 的 `Tutorial Video`（`Kind=2`、UUID `602babe5-64ba-5e66-b8d7-96392718d6b0`）指向 `Tutorial`（`9661b46c-abf5-5707-a30c-6582fd57c7e1`），对应第 95 行 link 的 `Meaning=3`。这类现有层级原样保留，工具不支持修改；不能把所有 `TypeId` 都强行改成 `Meaning=2`。
+节点 `Kind`：普通=1、类型=2、事件=3、标签=4、系统=5。工具创建普通/类型/标签；新类型默认 `Label=Name`。普通/类型节点初始 `ThoughtIconInfo` 为 `1::0:False:False:0:`，标签为 `8::0:False:False:0:`。这些默认值已由官方创建路径及样本印证。
 
-标签操作维护 `Kind=4` 标签节点及 `Meaning=5` 关系，保留样本中的 `TagIds`。移除普通关系不得误删类型、标签或固定关系。
+连线需联合解释 `Relation` 与 `Meaning`：
 
-同一类型的重复设置、已经存在/不存在的标签操作保持相关记录和时间戳不变。删除关系前检查它拥有的附件、属性、事件、访问记录及以其 UUID 为目录的成员；存在依赖时拒绝删除，避免遗留悬空内容。更换类型若需要替换带样式或未知字段的旧连线，也会拒绝自动替换；未实现级联删除或装饰迁移。验证器检查已知 `SourceType=1/2/3` 的脑图/节点/连线来源，历史日志与墓碑不要求来源仍然存在。
+| 用途 | Relation | Meaning | A → B |
+| --- | ---: | ---: | --- |
+| 普通父子 | 1 | 1 | 父 → 子 |
+| 跳转 | 3 | 1 | 两端联系，无父子方向 |
+| 类型分配 | 1 | 2 | 类型 → 普通节点 |
+| 类型层级 | 1 | 3 | 上级类型 → 下级类型，保留但不编辑 |
+| 标签分配 | 1 | 5 | 标签 → 普通节点 |
+| 固定 | 1 | 6 | 系统 Pinned → 节点，保留但不编辑 |
+
+`Direction=-1` 不表示父子方向。`set_type` 同步 `TypeId` 与类型连线；标签通过连线维护，不靠写 `TagIds`。带附件、属性、事件、访问记录或 UUID 目录成员的连线不能直接删除。
 
 ## 笔记、图标和附件
 
-`attachments.json` 的 `SourceId` 关联节点或脑图；附件本身还有独立 `Id`。常见布局：
-
-| 内容 | 元数据 | ZIP 成员路径 |
+| 内容 | 关键字段 | 成员路径 |
 | --- | --- | --- |
-| Markdown 笔记 | `Type=1, NoteType=4, SourceType=2`，`Location=Notes.md` | `{SourceId}/Notes.md` |
-| 旧 HTML 笔记 | `Type=4, NoteType=2, SourceType=2`，`Location=notes.html` | `{SourceId}/Notes/notes.html` |
-| 节点图标 | `Type=5, IsIcon=true, SourceType=2` | `{SourceId}/.data/Icon.png` |
-| 普通文件 | 样本 `Type=1, NoteType=0` | `{SourceId}/{Location}` |
-| 脑图壁纸 | `SourceType=1, IsWallpaper=true` | `{BrainId}/wallpaper.png` |
-| URL / 跨脑图引用 | 样本有 `Type=3`，`Location=brain://...` | 通常没有对应文件 |
+| Markdown | `Type=1, NoteType=4, SourceType=2, Name=Location=Notes.md` | `{SourceId}/Notes.md` |
+| 旧 HTML | `Type=4, NoteType=2, SourceType=2` | `{SourceId}/Notes/notes.html` |
+| PNG 图标 | `Type=5, IsIcon=true, SourceType=2` | `{SourceId}/.data/Icon.png` |
+| 普通文件 | `Type=1, NoteType=0` | `{SourceId}/{Location}` |
+| 壁纸 | `SourceType=1, IsWallpaper=true` | 脑图来源目录中的文件 |
+| URL | `Type=3` | 外部引用，一般无内嵌文件 |
 
-`test2 (1)/attachments.json:4` 的“加法”笔记指向 `3ff111a6-fd5e-44eb-8e76-e58a475b8370/Notes.md`，`DataLength=100`。改笔记需同步真实 UTF-8 字节长度、附件时间戳和相关成员；新建笔记还需登记 `meta.AttachmentFileStates[附件Id]=1`。这是附件 ID，不是节点 ID。
+`set_note` 同步 UTF-8 字节长度、附件时间和文件登记，保留旧 HTML。目标 `Notes.md` 被其他附件共用或有未登记文件时拒绝覆盖，即使共用文件当前缺失也不能重新创建冒充另一附件的内容。
 
-`set_note` 替换整份 Markdown。现有笔记必须 `Name=Notes.md` 且解析到 `{ThoughtId}/Notes.md`；若另一个附件也引用该成员路径，即使文件当前缺失，也拒绝写入，避免改动或制造另一附件的内容。已有未登记的 `Notes.md` 同样不覆盖。
+`ThoughtIconInfo` 的已识别形式有七段，位置从 0 开始。官方状态重算按笔记附件的 `ModificationDateTime` 选择最新记录，以 `DataLength>0` 设置位置 3；笔记附件为 `Type=4` 或 `Type=1 && Name=Notes.md`。位置 5 是日历事件数量。工具只更新笔记布尔段并保留其他段；缺失或无法识别的状态/时间拒绝写入。旧 HTML 时间更晚时，新 Markdown 不一定成为应用显示的笔记。
 
-官方状态重算路径确认：在笔记附件（`Type=4` 或 `Type=1 && Name=Notes.md`）中，按 `ModificationDateTime` 倒序选择最新一份，以其 `DataLength>0` 设置 `ThoughtIconInfo` 的位置 3（从 0 开始）。`set_note` 更新这一布尔段，保留另外六段，且保留旧 HTML 笔记。位置 5 是日历事件数量，不是继承图标数量。存在更晚时间戳的旧 HTML 时，仍按实际最新附件计算；不保证刚编辑的 Markdown 会成为应用显示的笔记。缺失/无法识别的状态串或时间戳会拒绝本次写操作。完整证据见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md#笔记标记的计算证据)。
+图标复用限同 BRZ、相同 Kind：来源缓存串为 `7::0:False:False:0:`，且恰有一个受支持的 PNG 图标；目标为简单 `1::0:False:False:0:` 或 `7::0:False:False:0:`，无类型、标签、笔记或其他附件状态。目标已有图标不替换。
 
-图标既涉及图片成员和附件元数据，也涉及 `ThoughtIconInfo`。工具仅复用同一 BRZ、相同 `Kind` 的已有图标模板：来源缓存串必须为 `7::0:False:False:0:`，目标必须是简单的 `1::0:False:False:0:` 或 `7::0:False:False:0:` 状态，且没有类型、标签、笔记或其他附件状态；来源需恰有一个已有的 `Type=5` PNG 图标附件。目标已有图标时不支持替换。工具不声称已实现任意图标编码。示例先为新建的类型节点复用“已学”的图标，再把普通节点分配到这个新类型；类型图标可能被普通节点继承，实际显示需在应用检查。
+已知 `SourceType=1/2/3` 分别引用脑图/节点/连线；悬空来源拒绝。原生再导出有一种受限壁纸例外：旧来源目录不同于当前 BrainId，但 `Type=1, NoteType=0, IsWallpaper=true, IsBrainAttachment=true, IsIcon=false, IsBrainIcon=false`，内嵌成员存在，且整数 `DataLength` 与实际字节数一致。这种情况保留并警告，不移动文件或重写归属。其他缺失来源仍报错。未改附件已有长度偏差可报告警告，不批量修补无关历史内容。
 
-原始样本已存在元数据偏差：`test2 (1)` 壁纸附件的 `DataLength=328177`，ZIP 中实际为 `186032` 字节。未改附件的既有差异应报告警告；不能为了“修复”无关字段而扩大编辑范围。
+## 属性与支持边界
 
-实际导入、脑图身份变更及再导出过程中，还观察到壁纸 `SourceId` 保留不同于 `meta.BrainId` 的旧脑图目录，图片字节保持完整。校验器仅在以下条件同时满足时将这一特例作为警告保留：`SourceType=1`、`Type=1`、`NoteType=0`、`IsWallpaper=true`、`IsBrainAttachment=true`、`IsIcon=false`、`IsBrainIcon=false`，且引用的内嵌成员存在、整数 `DataLength` 与实际字节数一致。工具不重写归属或移动文件；其他缺失脑图来源、缺失成员或长度不符仍拒绝。此规则只容纳已观察的导出布局，不实现通用附件归属迁移。
+官方属性类型为 Text=1、Integer=2、Decimal=3、Date=4、Boolean=5。当前仅修改已有 Integer/Decimal 定义的 `DecimalValue`；整数要求整值，两者均检查 .NET Decimal 的 96 位系数与最多 28 位小数。JSON 解析会损失精度时拒绝读取或写入。文本、日期、布尔编码及属性定义创建不支持。
 
-## 属性
+不支持删除节点、合并身份、任意文件附件上传、前景色写入、事件/固定/权限编辑及云同步。未知字段保持原样，不猜测运行中数据库结构。格式结论来自样本、官方类型/创建规则分析和应用实测；官方模型 JSON 检查曾覆盖节点、关系、附件及属性的 876 条记录，但其本身不能证明应用导入兼容。
 
-`fielddefinitions.json` 定义字段；`fieldinstances.json` 保存字段实例。
+## 验证输出
 
-本批仅 `elon` 有非空属性样本：
+先预演，再写出、校验。已有文件修改用 `compare` 核对记录与成员变化；默认每类最多 100 项明细，`truncated=true` 时增加 `--limit`。读取笔记默认最多 20000 字符，截断时增加 `--note-limit`（最高 1000000）或另读全文。`inspect` 成功退出仍可能含校验错误，应另外检查 `validate`。
 
-```json
-{"Name":"systemField.thought-type-is-hidden","DataType":2,"Id":"1649d341-888d-548d-b810-8ff2ca7902fb"}
-```
-
-其 `fieldinstances.json:1` 有：
-
-```json
-{"FieldDefinitionId":"1649d341-888d-548d-b810-8ff2ca7902fb","SourceId":"9661b46c-abf5-5707-a30c-6582fd57c7e1","SourceType":2,"DecimalValue":1.0,"Id":"1305f070-4945-430e-a2a5-25b01c3207f2"}
-```
-
-上面为省略时间戳和 `BrainId` 的摘录。官方元数据确认 `DataType`：Text=1、Integer=2、Decimal=3、Date=4、Boolean=5；本例是整数，不是布尔类型。工具仅更新已有 `DecimalValue` 且定义类型为 Integer/Decimal 的实例。整数拒绝小数值，两者均检查 .NET Decimal 的 96 位系数和最多 28 位小数限制。文本、日期、布尔的完整编码映射未实现，写入会明确拒绝；不创建未知类型的属性体系。
-
-JSON 数字若在 Python 解析后会失去原十进制精度，也会拒绝读入/执行计划，避免修改一个字段时悄悄舍入同一记录的其他值。该限制是保守拒绝，不表示原 BRZ 损坏；高精度数字的完整编辑需要后续实现无损数值解析。
-
-## 本地数据库与应用边界
-
-本仓库没有用户实际脑图存储目录，因此无法比较 BRZ 与所谓 `.dll` 数据文件，不能判断那些文件是数据库、程序库还是其他格式，更不能直接写入。
-
-官方安装包含 `Microsoft.Data.Sqlite.dll`、`TheBrain.Data.Sqlite.dll`、`e_sqlite3.dll` 等 SQLite 相关库，说明应用含 SQLite 访问组件；它们不是用户脑图数据库样本，也不足以确定本地数据库表结构。官方载荷目标为 `net6.0` / `Microsoft.WindowsDesktop.App 6.0`。Windows 原应用验收的具体样本和结果见 [VALIDATION.md](VALIDATION.md)。
-
-不要操作运行中的脑图、数据库、同步目录、授权或激活文件。离线编辑不需要执行压缩包中的授权工具。
-
-## 分级验证及导入检查
-
-工具应在修改前验证容器、逐行 JSON、UUID 唯一性、BrainId、引用完整性；计划绑定原 BRZ 的 SHA-256，先 dry-run，再输出不同路径的新 BRZ。输出后重新校验，比较未涉及 ZIP 成员和未改记录的字节，核对原件 SHA-256 未变。记录修改清单、输入和输出摘要、校验错误与警告。
-
-写入器在发布新文件前，重新打开临时 ZIP、验证结构，并逐成员比对预期字节。`python3 -m brain_toolkit compare 原件.brz 副本.brz` 可输出按 UUID 对齐的记录增删改、字段前后值及成员字节哈希。比较明细默认每类最多 100 项，保留完整数量和截断标志；未知文件按字节比较，不尝试解释其结构。原应用若重分配 UUID，不能把此报告直接当成语义等价判断。
-
-这些检查只能证明离线结构和编辑范围。**在完成以下人工测试之前，不称为“兼容原软件”或“已成功导入”。**
-
-1. 在正常可用的 TheBrain 14 中备份现有脑图，准备一个新建、可丢弃的测试脑图；不要把第一次测试合并到日常脑图。
-2. 使用应用 `File → Import → Brain Archive (brz)` 流程导入编辑副本，确认目标是测试脑图。随包手册 p252–253（PDF 物理页259–260）说明当前打开的脑图会被修改，并明确 BRZ 导入不能撤销。
-3. 按修改清单检查名称、父子方向、多个父节点、跳转、类型、标签、笔记、颜色和复用图标。打开未修改节点检查其附件仍可访问；记录具体应用版本和结果。
-4. 关闭并重新打开测试脑图，再导出为新的 BRZ，用工具复查图结构与笔记，区分应用自行规范化的变化和实际缺失。
-5. 只有上述检查通过，才把本次样本的应用往返验证标记为通过。出现导入错误、引用丢失或显示异常时保留原件与报告，停止向正式脑图推广。
+写入器发布前重读临时 ZIP，校验结构并逐成员检查预期字节。原应用可能重分配 UUID 或规范化字段，应用往返需核对语义和附件，不能只比数量或 ID；步骤见 [VALIDATION.md](VALIDATION.md#如何验证)。

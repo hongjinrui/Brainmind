@@ -17,11 +17,6 @@ jobs:
         python-version: ['3.10', '3.13', '3.14']
     steps:
       - uses: actions/checkout@v6
-        with:
-          sparse-checkout: |
-            /*
-            !/Brainmind.7z.*
-          sparse-checkout-cone-mode: false
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}

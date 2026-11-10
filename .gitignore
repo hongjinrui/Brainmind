@@ -5,5 +5,3 @@ __pycache__/
 .venv/
 /build/
 /dist/
-/tools/official-model-check/bin/
-/tools/official-model-check/obj/

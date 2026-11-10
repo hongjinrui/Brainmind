@@ -421,19 +421,5 @@ class ArchiveTests(unittest.TestCase):
         self.assertTrue(validation["warnings"])
 
 
-class ProvidedExportSmokeTests(unittest.TestCase):
-    def test_each_available_provided_export_is_structurally_valid(self):
-        root = Path(__file__).resolve().parents[1]
-        fixtures = sorted((root / "work/extracted/TheBrain14 - v2").glob("*.brz"))
-        if not fixtures:
-            self.skipTest("Original split archive has not been extracted; synthetic tests are sufficient in CI")
-        self.assertEqual(5, len(fixtures))
-        for path in fixtures:
-            with self.subTest(export=path.name):
-                archive = Archive(path)
-                self.assertEqual([], archive.validate()["errors"])
-                self.assertIsInstance(archive.summary(), dict)
-
-
 if __name__ == "__main__":
     unittest.main()

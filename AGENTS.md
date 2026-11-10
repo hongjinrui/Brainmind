@@ -1,13 +1,11 @@
 # Repository guidance
 
-This repository contains the user's original multipart bundle and an experimental offline editor for its TheBrain BRZ exports.
+Brainmind creates new TheBrain BRZ archives from structured content and edits existing exports offline. The runtime requires only Python 3.10+ and the standard library.
 
-For brain-content work, read `skills/brz-edit/SKILL.md` and `docs/FORMAT.md`. Create a new brain with `python3 -m brain_toolkit create --content content.json --output new.brz`; no input BRZ is needed. Edit existing exports with source-SHA-bound JSON plans and output a separate new BRZ and change report. Follow the user's existing authorization without adding routine approval steps.
+For brain-content work, read `skills/brz-edit/SKILL.md` and `docs/FORMAT.md`. Use `create --content` for new works without an input BRZ. Edit existing archives with source-SHA-bound JSON plans and publish a separate new BRZ. Follow the user's authorization without adding routine approval steps.
 
-Keep original `Brainmind.7z.*` files and extracted source BRZ files unchanged. Put extraction, scratch analysis, and temporary outputs in `work/`, which is ignored by Git. Do not execute activation utilities or modify licensing files. Do not infer a live database schema from DLL filenames.
+Preserve user-provided input files, unknown fields, unrelated ZIP members and untouched record bytes. Put temporary inputs, reports and generated test artifacts in ignored `work/`. Do not edit live databases, synchronization data or licensing files.
 
-Preserve unknown fields, unrelated ZIP members and untouched record bytes. Do not claim application compatibility from offline structure checks. Application import verification requires a disposable test brain and the round-trip procedure documented in `docs/FORMAT.md`.
+Offline validation does not establish application compatibility. Verify outputs in an independent test brain in TheBrain, reopen and re-export when application verification is required; see `docs/VALIDATION.md`.
 
-For editor code changes, run `python3 -m unittest discover -s tests -v`. The core has no runtime dependencies beyond Python 3.10+.
-
-Keep the distributable skill in `releases/brz-edit.zip` consistent with its source. Build to a new temporary path with `tools/package_skill.py --output`, replace the release deliberately after verification, and run `tools/package_skill.py --check releases/brz-edit.zip`. The package contains the runtime so users do not need a checkout or a starting BRZ.
+For code changes, run `python -X utf8 -m unittest discover -s tests -v`. Keep `releases/brz-edit.zip` consistent with source: build to a new temporary path using `tools/package_skill.py --output`, deliberately replace the release after verification, then run `tools/package_skill.py --check releases/brz-edit.zip`. Maintain core code only in `brain_toolkit`; the standalone package receives its runtime at build time.

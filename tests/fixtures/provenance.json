@@ -1,0 +1,11 @@
+{
+  "thebrain14-native-nist.brz": {
+    "sha256": "f4110b4ff0eee627cb621c287a20b949ae5af02f0457221e103777f47f0548ac",
+    "application": "TheBrain 14.0.102.0 on Windows",
+    "origin": "Native export after importing, opening, closing and reopening the project's source-free NIST example",
+    "content": "Original Chinese learning notes and practice prompts based on NIST AI RMF 1.0; same content as examples/nist-ai-rmf/content.json",
+    "source_url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+    "purpose": "Regression fixture for accepting native-generated settings, logs, syncpoints and timestamps, preserving all notes and relationships, and continuing safe offline edits",
+    "not_required_for_end_users": true
+  }
+}
