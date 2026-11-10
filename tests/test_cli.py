@@ -24,6 +24,7 @@ class CliTests(unittest.TestCase):
             output.writestr("meta.json", json.dumps({"BrainId": brain, "ExchangeFormatVersion": 5}))
             output.writestr("thoughts.json", json.dumps({
                 "Id": self.node, "BrainId": brain, "Name": "原名称", "Kind": 1, "TagIds": [],
+                "ThoughtIconInfo": "1::0:False:False:0:",
             }))
             for name in ("links", "attachments"):
                 output.writestr(name + ".json", b"\xef\xbb\xbf")
@@ -57,6 +58,12 @@ class CliTests(unittest.TestCase):
         self.assertEqual("中文", note["text"])
         self.assertTrue(note["truncated"])
         self.assertEqual(4, note["characters"])
+        code, comparison = self.run_cli("compare", self.source, target)
+        self.assertEqual(0, code)
+        self.assertEqual({"added": 1, "removed": 0, "changed": 1}, comparison["record_counts"])
+        self.assertEqual(1, comparison["members"]["added"]["count"])
+        change = comparison["records"]["thoughts.json"]["changed"]["items"][0]
+        self.assertEqual("新名称", change["after"]["Name"])
 
     def test_duplicate_plan_keys_and_nonfinite_numbers_are_rejected(self):
         target = self.root / "result.brz"

@@ -55,10 +55,12 @@ fielddefinitions.json                  fieldinstances.json
 | `TagIds` | 所有样本均为空数组；不能仅靠写此数组实现标签 |
 | `Label` | 标签文字字段；与作为分类节点的 Tag 不同 |
 | `BackgroundColor` | 样本有符号 32 位颜色整数 |
-| `ThoughtIconInfo` | 冒号分隔的内部状态串；未完成各段语义验证，不应任意拼接 |
+| `ThoughtIconInfo` | 七段状态串；已确认笔记标记等部分语义，仅修改受支持的字段，见下文 |
 | `ForgottenDateTime` | 部分样本存在的遗忘标记；不是删除指令 |
 
 官方安装包内 `TheBrainCore.dll` 的枚举元数据给出 `ThoughtKind`：`Undefined=0`、`Normal=1`、`Type=2`、`Event=3`、`Tag=4`、`System=5`。样本同时印证 `Normal/Type/Tag/System`；没有据此实现 Event 创建。
+
+进一步静态复核官方创建路径，确认新类型节点默认 `Label=Name`，新标签的 `ThoughtIconInfo` 为 `8::0:False:False:0:`；普通/类型节点默认前缀为 `1`。新节点直接使用 `Guid.NewGuid`，支持工具使用 UUID v4。方法编号、指令偏移和复现脚本见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md)。
 
 例：`test2 2025-03-21 (1).brz/thoughts.json:4` 是“加法”，UUID 为 `3ff111a6-fd5e-44eb-8e76-e58a475b8370`，`TypeId` 指向第 6 行“已学” `68a53d65-bb6e-4d9d-847c-f88f71f1e8ae`；第 14 行是系统节点 `Pinned`。
 
@@ -87,6 +89,8 @@ fielddefinitions.json                  fieldinstances.json
 
 标签操作维护 `Kind=4` 标签节点及 `Meaning=5` 关系，保留样本中的 `TagIds`。移除普通关系不得误删类型、标签或固定关系。
 
+同一类型的重复设置、已经存在/不存在的标签操作保持相关记录和时间戳不变。删除关系前检查它拥有的附件、属性、事件、访问记录及以其 UUID 为目录的成员；存在依赖时拒绝删除，避免遗留悬空内容。更换类型若需要替换带样式或未知字段的旧连线，也会拒绝自动替换；未实现级联删除或装饰迁移。验证器检查已知 `SourceType=1/2/3` 的脑图/节点/连线来源，历史日志与墓碑不要求来源仍然存在。
+
 ## 笔记、图标和附件
 
 `attachments.json` 的 `SourceId` 关联节点或脑图；附件本身还有独立 `Id`。常见布局：
@@ -100,7 +104,9 @@ fielddefinitions.json                  fieldinstances.json
 | 脑图壁纸 | `SourceType=1, IsWallpaper=true` | `{BrainId}/wallpaper.png` |
 | URL / 跨脑图引用 | 样本有 `Type=3`，`Location=brain://...` | 通常没有对应文件 |
 
-`test2 (1)/attachments.json:4` 的“加法”笔记指向 `3ff111a6-fd5e-44eb-8e76-e58a475b8370/Notes.md`，`DataLength=100`。改笔记需同步真实 UTF-8 字节长度、附件时间戳和相关成员；新建笔记还需登记 `meta.AttachmentFileStates[附件Id]=1`。这是附件 ID，不是节点 ID。`set_note` 保留 `ThoughtIconInfo` 缓存串，因为其内部协议尚未确定；导入后可能需要应用刷新状态，笔记标记及显示效果待人工核对。
+`test2 (1)/attachments.json:4` 的“加法”笔记指向 `3ff111a6-fd5e-44eb-8e76-e58a475b8370/Notes.md`，`DataLength=100`。改笔记需同步真实 UTF-8 字节长度、附件时间戳和相关成员；新建笔记还需登记 `meta.AttachmentFileStates[附件Id]=1`。这是附件 ID，不是节点 ID。
+
+官方状态重算路径确认：在笔记附件（`Type=4` 或 `Type=1 && Name=Notes.md`）中，按 `ModificationDateTime` 倒序选择最新一份，以其 `DataLength>0` 设置 `ThoughtIconInfo` 的位置 3（从 0 开始）。`set_note` 更新这一布尔段，保留另外六段，且保留旧 HTML 笔记。位置 5 是日历事件数量，不是继承图标数量。存在更晚时间戳的旧 HTML 时，仍按实际最新附件计算；不保证刚编辑的 Markdown 会成为应用显示的笔记。缺失/无法识别的状态串或时间戳会拒绝本次写操作。完整证据见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md#笔记标记的计算证据)。
 
 图标既涉及图片成员和附件元数据，也涉及 `ThoughtIconInfo`。工具仅复用同一 BRZ、相同 `Kind` 的已有图标模板：来源缓存串必须为 `7::0:False:False:0:`，目标必须是简单的 `1::0:False:False:0:` 或 `7::0:False:False:0:` 状态，且没有类型、标签、笔记或其他附件状态；来源需恰有一个已有的 `Type=5` PNG 图标附件。目标已有图标时不支持替换。工具不声称已实现任意图标编码。示例先为新建的类型节点复用“已学”的图标，再把普通节点分配到这个新类型；类型图标可能被普通节点继承，实际显示需在应用检查。
 
@@ -122,7 +128,9 @@ fielddefinitions.json                  fieldinstances.json
 {"FieldDefinitionId":"1649d341-888d-548d-b810-8ff2ca7902fb","SourceId":"9661b46c-abf5-5707-a30c-6582fd57c7e1","SourceType":2,"DecimalValue":1.0,"Id":"1305f070-4945-430e-a2a5-25b01c3207f2"}
 ```
 
-上面为省略时间戳和 `BrainId` 的摘录。可确认“定义 UUID → 实例 → 来源 UUID”的引用链；不能仅凭一例推出完整 `DataType` 枚举。工具仅受限更新已有实例的已有值字段，不负责创建未知类型的属性体系。
+上面为省略时间戳和 `BrainId` 的摘录。官方元数据确认 `DataType`：Text=1、Integer=2、Decimal=3、Date=4、Boolean=5；本例是整数，不是布尔类型。工具仅更新已有 `DecimalValue` 且定义类型为 Integer/Decimal 的实例。整数拒绝小数值，两者均检查 .NET Decimal 的 96 位系数和最多 28 位小数限制。文本、日期、布尔的完整编码映射未实现，写入会明确拒绝；不创建未知类型的属性体系。
+
+JSON 数字若在 Python 解析后会失去原十进制精度，也会拒绝读入/执行计划，避免修改一个字段时悄悄舍入同一记录的其他值。该限制是保守拒绝，不表示原 BRZ 损坏；高精度数字的完整编辑需要后续实现无损数值解析。
 
 ## 本地数据库与应用边界
 
@@ -135,6 +143,8 @@ fielddefinitions.json                  fieldinstances.json
 ## 分级验证及导入检查
 
 工具应在修改前验证容器、逐行 JSON、UUID 唯一性、BrainId、引用完整性；计划绑定原 BRZ 的 SHA-256，先 dry-run，再输出不同路径的新 BRZ。输出后重新校验，比较未涉及 ZIP 成员和未改记录的字节，核对原件 SHA-256 未变。记录修改清单、输入和输出摘要、校验错误与警告。
+
+写入器在发布新文件前，重新打开临时 ZIP、验证结构，并逐成员比对预期字节。`python3 -m brain_toolkit compare 原件.brz 副本.brz` 可输出按 UUID 对齐的记录增删改、字段前后值及成员字节哈希。比较明细默认每类最多 100 项，保留完整数量和截断标志；未知文件按字节比较，不尝试解释其结构。原应用若重分配 UUID，不能把此报告直接当成语义等价判断。
 
 这些检查只能证明离线结构和编辑范围。**在完成以下人工测试之前，不称为“兼容原软件”或“已成功导入”。**
 

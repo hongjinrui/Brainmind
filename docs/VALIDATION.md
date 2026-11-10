@@ -1,6 +1,6 @@
 # 验证记录
 
-日期：2026-11-10。结论：**可以通过代码读取、修改和重新打包现有 BRZ 的已研究字段；本次仅完成文件层验证，原应用兼容性尚未验证。**
+日期：2026-11-10，复核修订。结论：**可以通过代码读取、修改和重新打包现有 BRZ 的已研究字段；已通过文件层检查及官方数据模型 JSON 往返检查，完整应用导入仍未验证。**
 
 ## 自动检查
 
@@ -10,9 +10,11 @@
 python3 -m unittest discover -s tests -v
 ```
 
-结果：28 项测试通过，其中一项以子测试逐一读取本仓库恢复出的五份原始 BRZ。其余测试使用自包含样本，不依赖安装器或第三方库；尚未恢复 `work/extracted` 的环境会跳过实样本检查。
+结果：63 项测试通过，其中一项以子测试逐一读取本仓库恢复出的五份原始 BRZ。其余测试使用自包含样本，不依赖安装器或第三方库；尚未恢复 `work/extracted` 的环境会跳过实样本检查。
 
 覆盖名称与 UUID、父子/跳转、类型/标签同步、多个同名节点、Markdown 笔记及 UTF-8 字节长度、保留 HTML、受限图标模板、已有属性值、背景色、计划哈希和事务回退、禁止覆盖、未知文件/字段、原始行和 ZIP 元数据保留，以及重复键、非有限数值、重复成员、路径穿越、加密与符号链接拒绝。CLI 另验证预演不写文件、写后重新读取校验及笔记截断标志。
+
+本次新增回归重点：相同类型/标签不重建记录、删除连线不遗留附属内容、类型替换不丢样式、新类型/标签官方默认值、最新笔记的缓存标记、整数/小数属性约束、JSON 精度损失拒绝、已知来源引用校验、写入发布前重读与比较报告。上一版 28 项测试没有覆盖这些问题，不能据此认为上一版完全正确。
 
 所有五份原始导出的 `validation.errors` 均为空。`test2 (1)` 原本就有一条壁纸 `DataLength` 不一致警告，编辑副本保留该警告，没有改动壁纸。
 
@@ -26,7 +28,7 @@ python3 -m unittest discover -s tests -v
 77b752d502b643830a88a05279df7b9f5c5af42391addcbf848fbaf7a88b13a5
 ```
 
-按 [demo.plan.json](../examples/demo.plan.json) 的 11 个操作生成 [test2-code-edit-demo.brz](../examples/test2-code-edit-demo.brz)，修改清单和摘要见 [demo.report.json](../examples/demo.report.json)。
+按 [demo.plan.json](../examples/demo.plan.json) 的 11 个操作重新生成 [test2-code-edit-demo.brz](../examples/test2-code-edit-demo.brz)，修改清单和摘要见 [demo.report.json](../examples/demo.report.json)，逐字段/成员变化见 [demo.diff.json](../examples/demo.diff.json)。
 
 - 原“加法”改为“加法（代码修改验证）”并增加 Label，保留原 UUID。
 - 新增普通节点“代码编辑验证”、标签“代码验证”和类型“代码验证类型”。
@@ -44,10 +46,12 @@ python3 -m unittest discover -s tests -v
 输出 SHA-256：
 
 ```text
-1bb1cfc19f5187e4bf33a0778a007f2338dc91dea9f41737b0f8f0c2210f3e55
+3e4d9973eb67a3d71f0a78da2a1472134b5ac5c131642727c94fe17d7fcaa0a5
 ```
 
 将输出重新打开并校验：`errors=[]`。程序重新读取新增笔记，内容完整且未截断。这里只检查已登记的图标文件与状态，未声称原应用中已正确显示。
+
+本次重建还核对了上一版遗漏的三个状态：新普通节点的非空笔记标记为 `True`、新标签图标前缀为 `8`、新类型具有与名称一致的默认 `Label`。
 
 文件范围比对结果：
 
@@ -59,6 +63,12 @@ python3 -m unittest discover -s tests -v
 
 重新执行计划会产生新的时间戳，以及未显式指定的新 link/附件 UUID，因此文件摘要可能不同；应核对语义和变更范围，不要求重新生成的 ZIP 与本次输出逐字节相同。
 
+## 官方数据模型往返检查
+
+在 Linux 上使用本地 .NET 6 和官方 `TheBrainCore.dll` / `Newtonsoft.Json.dll`，对五份原始 BRZ 加修订演示的节点、连线、附件、属性定义、属性实例共 **876 条记录**，实际执行了反序列化、重新序列化及原有键值的语义比对。全部通过，没有原有键值的语义差异；时间字符串尾随零的规范化单独记录。
+
+这比 Python 自己读写自己的格式更有证据力，但使用的是官方数据模型与 JSON 库，**没有调用归档导入器、写入应用数据库或启动界面**。完整方法、复现命令和结果见 [OFFICIAL-MODEL-CHECK.md](OFFICIAL-MODEL-CHECK.md)。
+
 ## 静态程序证据与应用测试边界
 
 没有执行包内安装器或授权工具。对官方安装器进行静态提取后，检查官方程序集元数据和运行配置：
@@ -68,7 +78,7 @@ python3 -m unittest discover -s tests -v
 | `TheBrain 14.0.102.0 Installer.exe` | `231b8c6bad468b031bcc283c109fa8f117f4574cff0211f15c5d5fe9ca9324d6` |
 | 官方载荷 `TheBrainCore.dll` | `70356c4e3c243b8072d839754e69d34346803dec4a3c38dca336d2fb0a50d2fa` |
 
-元数据印证 Normal/Type/Tag/System 的节点类别数值；没有恢复完整业务源码。运行配置 `TheBrain.Windows.App.runtimeconfig.json` 指向 `net6.0`、`Microsoft.NETCore.App 6.0.0` 和 `Microsoft.WindowsDesktop.App 6.0.0`。
+元数据印证 Normal/Type/Tag/System 的节点类别数值，进一步的 CIL 检查确认新节点默认值、笔记标记和属性类型，见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md)。没有恢复完整业务源码。运行配置 `TheBrain.Windows.App.runtimeconfig.json` 指向 `net6.0`、`Microsoft.NETCore.App 6.0.0` 和 `Microsoft.WindowsDesktop.App 6.0.0`。
 
 当前执行环境为 Linux，未配置运行该 Windows 桌面程序的环境，因此未完成“原应用导入 → 关闭重开 → 再导出”的测试。**原应用测试状态：未验证**。具体检查步骤见 [FORMAT.md](FORMAT.md#分级验证及导入检查)；首次应导入可丢弃的独立测试脑图。
 

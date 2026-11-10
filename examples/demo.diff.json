@@ -1,0 +1,358 @@
+{
+  "source_sha256": "77b752d502b643830a88a05279df7b9f5c5af42391addcbf848fbaf7a88b13a5",
+  "target_sha256": "3e4d9973eb67a3d71f0a78da2a1472134b5ac5c131642727c94fe17d7fcaa0a5",
+  "detail_limit_per_list": 100,
+  "members": {
+    "added": {
+      "count": 2,
+      "items": [
+        {
+          "path": "257122e5-fa71-46d7-86c1-bd7be84a4e47/Notes.md",
+          "bytes": 273,
+          "sha256": "580e33c7bd1220c3e73a0f6d79d5c7bb12ab13043d1470df51ca5468e1941100"
+        },
+        {
+          "path": "e235c6c3-8582-4cbb-8024-0cb9069002b7/.data/Icon.png",
+          "bytes": 3809,
+          "sha256": "61f440c00f80cba90fddaedfdb7f4d6e30da5e9777dd4ebd859b3196eee88151"
+        }
+      ],
+      "truncated": false
+    },
+    "removed": {
+      "count": 0,
+      "items": [],
+      "truncated": false
+    },
+    "changed": {
+      "count": 4,
+      "items": [
+        {
+          "path": "attachments.json",
+          "before": {
+            "bytes": 3951,
+            "sha256": "351202d859d946c0949a1fa7b5eb7ead4f1932f6b1ec699c0bf24fb2c348111f"
+          },
+          "after": {
+            "bytes": 4933,
+            "sha256": "a7e35ab004264909fc6e33890b368472ad290f56f978abbd6460a16c8b8ba6dc"
+          }
+        },
+        {
+          "path": "links.json",
+          "before": {
+            "bytes": 5478,
+            "sha256": "8ce1b4befe1472fc9c6fb095ed4d812abc09e2d513b085f66ec5156682f221de"
+          },
+          "after": {
+            "bytes": 6930,
+            "sha256": "97b77276d96534d50ef0afa5d5c76a17aa76f6bd7990443d083036bb8f08ba28"
+          }
+        },
+        {
+          "path": "meta.json",
+          "before": {
+            "bytes": 392,
+            "sha256": "2e1da2016d18ed899d9bcaf297fd3014f6afe92ca5258b80d8a616b979a2a3ea"
+          },
+          "after": {
+            "bytes": 474,
+            "sha256": "7ae4445b79e63fa62e8fcac106f09f962b137bbeda7213ba4759ef450ca5a5b0"
+          }
+        },
+        {
+          "path": "thoughts.json",
+          "before": {
+            "bytes": 5002,
+            "sha256": "9313831bcdc444caa8a096406a2caec0646bc0bbb128503bf956a8f34b49592b"
+          },
+          "after": {
+            "bytes": 6044,
+            "sha256": "f1365aa07de159e28ec0a124840ab13d8a9cd44435167dae7b5d84bf40a5bb85"
+          }
+        }
+      ],
+      "truncated": false
+    },
+    "unchanged_count": 16
+  },
+  "record_counts": {
+    "added": 9,
+    "removed": 0,
+    "changed": 1
+  },
+  "records": {
+    "attachments.json": {
+      "added": {
+        "count": 2,
+        "items": [
+          {
+            "id": "80085d70-e9fc-4d1a-bed9-b74e03f36c80",
+            "record": {
+              "SourceId": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "Name": "Notes.md",
+              "Position": 0.0,
+              "Type": 1,
+              "Location": "Notes.md",
+              "IsIcon": false,
+              "SourceType": 2,
+              "NoteType": 4,
+              "IsWallpaper": false,
+              "IsBrainIcon": false,
+              "IsBrainAttachment": false,
+              "CreationDateTime": "2026-11-10T11:37:16.256902",
+              "ModificationDateTime": "2026-11-10T11:37:16.256954",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "80085d70-e9fc-4d1a-bed9-b74e03f36c80",
+              "DataLength": 273,
+              "FileModificationDateTime": "2026-11-10T11:37:16.256954"
+            }
+          },
+          {
+            "id": "e48bf915-fbae-455b-bd67-cf6e6c715b31",
+            "record": {
+              "SourceId": "e235c6c3-8582-4cbb-8024-0cb9069002b7",
+              "Name": "Icon.png",
+              "Position": 0.0,
+              "FileModificationDateTime": "2026-11-10T11:37:16.256708",
+              "Type": 5,
+              "DataLength": 3809,
+              "Location": "Icon.png",
+              "IsIcon": true,
+              "SourceType": 2,
+              "NoteType": 0,
+              "IsWallpaper": false,
+              "IsBrainIcon": false,
+              "IsBrainAttachment": false,
+              "CreationDateTime": "2026-11-10T11:37:16.256646",
+              "ModificationDateTime": "2026-11-10T11:37:16.256646",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "e48bf915-fbae-455b-bd67-cf6e6c715b31"
+            }
+          }
+        ],
+        "truncated": false
+      },
+      "removed": {
+        "count": 0,
+        "items": [],
+        "truncated": false
+      },
+      "changed": {
+        "count": 0,
+        "items": [],
+        "truncated": false
+      }
+    },
+    "links.json": {
+      "added": {
+        "count": 4,
+        "items": [
+          {
+            "id": "1297387d-a15a-496a-a031-9e668ef783ca",
+            "record": {
+              "ThoughtIdA": "e235c6c3-8582-4cbb-8024-0cb9069002b7",
+              "ThoughtIdB": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "Kind": 1,
+              "Relation": 1,
+              "Direction": -1,
+              "Meaning": 2,
+              "Thickness": -1,
+              "CreationDateTime": "2026-11-10T11:37:16.256747",
+              "ModificationDateTime": "2026-11-10T11:37:16.256747",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "1297387d-a15a-496a-a031-9e668ef783ca"
+            }
+          },
+          {
+            "id": "375005d8-ffd7-49b4-8e21-d6d41aa270a5",
+            "record": {
+              "ThoughtIdA": "04f2faa9-d12e-44cd-a4d4-626fb77b67df",
+              "ThoughtIdB": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "Kind": 1,
+              "Relation": 1,
+              "Direction": -1,
+              "Meaning": 5,
+              "Thickness": -1,
+              "CreationDateTime": "2026-11-10T11:37:16.256830",
+              "ModificationDateTime": "2026-11-10T11:37:16.256830",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "375005d8-ffd7-49b4-8e21-d6d41aa270a5"
+            }
+          },
+          {
+            "id": "831948df-e89c-41db-a995-b21d9a3740bc",
+            "record": {
+              "ThoughtIdA": "f179708b-bcba-4e4e-9399-d5baad67e033",
+              "ThoughtIdB": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "Kind": 1,
+              "Relation": 1,
+              "Direction": -1,
+              "Meaning": 1,
+              "Thickness": -1,
+              "CreationDateTime": "2026-11-10T11:37:16.256167",
+              "ModificationDateTime": "2026-11-10T11:37:16.256167",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "831948df-e89c-41db-a995-b21d9a3740bc"
+            }
+          },
+          {
+            "id": "bc0332bf-380e-4547-b093-bb55b6995043",
+            "record": {
+              "ThoughtIdA": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "ThoughtIdB": "3ff111a6-fd5e-44eb-8e76-e58a475b8370",
+              "Kind": 1,
+              "Relation": 3,
+              "Direction": -1,
+              "Meaning": 1,
+              "Thickness": -1,
+              "CreationDateTime": "2026-11-10T11:37:16.256392",
+              "ModificationDateTime": "2026-11-10T11:37:16.256392",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "bc0332bf-380e-4547-b093-bb55b6995043"
+            }
+          }
+        ],
+        "truncated": false
+      },
+      "removed": {
+        "count": 0,
+        "items": [],
+        "truncated": false
+      },
+      "changed": {
+        "count": 0,
+        "items": [],
+        "truncated": false
+      }
+    },
+    "thoughts.json": {
+      "added": {
+        "count": 3,
+        "items": [
+          {
+            "id": "04f2faa9-d12e-44cd-a4d4-626fb77b67df",
+            "record": {
+              "Name": "代码验证",
+              "ACType": 0,
+              "TagIds": [],
+              "Kind": 4,
+              "ThoughtIconInfo": "8::0:False:False:0:",
+              "CreationDateTime": "2026-11-10T11:37:16.256068",
+              "ModificationDateTime": "2026-11-10T11:37:16.256068",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "04f2faa9-d12e-44cd-a4d4-626fb77b67df"
+            }
+          },
+          {
+            "id": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+            "record": {
+              "Name": "代码编辑验证",
+              "ACType": 0,
+              "TagIds": [],
+              "Kind": 1,
+              "ThoughtIconInfo": "1::0:True:False:0:",
+              "CreationDateTime": "2026-11-10T11:37:16.255973",
+              "ModificationDateTime": "2026-11-10T11:37:16.256954",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
+              "BackgroundColor": -256,
+              "TypeId": "e235c6c3-8582-4cbb-8024-0cb9069002b7"
+            }
+          },
+          {
+            "id": "e235c6c3-8582-4cbb-8024-0cb9069002b7",
+            "record": {
+              "Name": "代码验证类型",
+              "ACType": 0,
+              "TagIds": [],
+              "Kind": 2,
+              "ThoughtIconInfo": "7::0:False:False:0:",
+              "CreationDateTime": "2026-11-10T11:37:16.256518",
+              "ModificationDateTime": "2026-11-10T11:37:16.256713",
+              "BrainId": "804ba95f-587d-4837-9f1f-3b3389dbc18d",
+              "Id": "e235c6c3-8582-4cbb-8024-0cb9069002b7",
+              "Label": "代码验证类型"
+            }
+          }
+        ],
+        "truncated": false
+      },
+      "removed": {
+        "count": 0,
+        "items": [],
+        "truncated": false
+      },
+      "changed": {
+        "count": 1,
+        "items": [
+          {
+            "id": "3ff111a6-fd5e-44eb-8e76-e58a475b8370",
+            "changed_fields": [
+              "Label",
+              "ModificationDateTime",
+              "Name"
+            ],
+            "before": {
+              "ModificationDateTime": "2025-03-21T04:29:45.5349428",
+              "Name": "加法"
+            },
+            "after": {
+              "Label": "保留原 UUID 的修改示例",
+              "ModificationDateTime": "2026-11-10T11:37:16.255949",
+              "Name": "加法（代码修改验证）"
+            }
+          }
+        ],
+        "truncated": false
+      }
+    }
+  },
+  "meta": {
+    "count": 1,
+    "changed_fields": [
+      "AttachmentFileStates"
+    ],
+    "before": {
+      "AttachmentFileStates": {
+        "01186896-f2be-456c-bed8-d047334f6d55": 1,
+        "2ed4de8a-1dac-4532-be5e-aecf2098288d": 1,
+        "94e6dc49-6133-4f7b-9d9c-5c485e232748": 1,
+        "be04a78a-0c9c-44a0-a94e-32102be288ff": 1,
+        "c629d8af-95c1-412e-8774-b421752b60f7": 1,
+        "e12ca66c-06d6-4b91-8e0d-2f6053ba8cda": 1,
+        "fbe6a960-0fbd-468d-abea-333340675f42": 1
+      }
+    },
+    "after": {
+      "AttachmentFileStates": {
+        "01186896-f2be-456c-bed8-d047334f6d55": 1,
+        "2ed4de8a-1dac-4532-be5e-aecf2098288d": 1,
+        "94e6dc49-6133-4f7b-9d9c-5c485e232748": 1,
+        "be04a78a-0c9c-44a0-a94e-32102be288ff": 1,
+        "c629d8af-95c1-412e-8774-b421752b60f7": 1,
+        "e12ca66c-06d6-4b91-8e0d-2f6053ba8cda": 1,
+        "fbe6a960-0fbd-468d-abea-333340675f42": 1,
+        "e48bf915-fbae-455b-bd67-cf6e6c715b31": 1,
+        "80085d70-e9fc-4d1a-bed9-b74e03f36c80": 1
+      }
+    },
+    "truncated": false
+  },
+  "comparison_scope": "Uncompressed member bytes and known records matched by exact ID",
+  "application_import_verified": false,
+  "validation": {
+    "source": {
+      "errors": [],
+      "warnings": [
+        "Attachment c629d8af-95c1-412e-8774-b421752b60f7: DataLength 328177 differs from 186032 bytes"
+      ]
+    },
+    "target": {
+      "errors": [],
+      "warnings": [
+        "Attachment c629d8af-95c1-412e-8774-b421752b60f7: DataLength 328177 differs from 186032 bytes"
+      ]
+    }
+  }
+}

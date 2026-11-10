@@ -2,15 +2,17 @@
 
 本仓库现在包含一套 **实验性的 BRZ 离线编辑工具**。无需找回原软件源代码，即可读取现有导出包、按 UUID 修改节点及关系，输出新的 BRZ 副本。工具只用 Python 标准库，要求 Python 3.10 或更新版本。
 
-已验证的是五份现有 BRZ 的文件结构及编辑后的内部一致性；**尚未验证原软件导入、重新打开和再导出**。随包官方手册明确警告手工修改归档可能破坏文件，因此首次使用应在独立测试脑图中导入副本。原始四卷和其中的原始 BRZ 均保持不变。
+已验证五份现有 BRZ 的文件结构、编辑后的内部一致性，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查；**尚未验证完整软件导入、重新打开和再导出**。随包官方手册明确警告手工修改归档可能破坏文件，因此首次使用应在独立测试脑图中导入副本。原始四卷和其中的原始 BRZ 均保持不变。
 
 ## 从哪里开始
 
 - [操作 skill](skills/brz-edit/SKILL.md)：以后让助手整理资料时使用的工作流程。
 - [格式分析](docs/FORMAT.md)：节点、关系、UUID、标签、类型、笔记、属性及图标的证据和边界。
+- [官方程序静态证据](docs/STATIC-EVIDENCE.md)：补强新节点默认值、笔记状态和属性类型的判断，附可复现脚本。
+- [官方数据模型检查](docs/OFFICIAL-MODEL-CHECK.md)：实际加载官方模型验证 JSON 往返，明确与完整应用测试的区别。
 - [输入清单与哈希](docs/INVENTORY.json)：四卷及五份 BRZ 的摘要和记录数量。
 - [验证记录](docs/VALIDATION.md)：自动检查、示例变化、原应用测试状态。
-- [演示计划](examples/demo.plan.json)、[演示 BRZ](examples/test2-code-edit-demo.brz)、[演示报告](examples/demo.report.json)。
+- [演示计划](examples/demo.plan.json)、[演示 BRZ](examples/test2-code-edit-demo.brz)、[演示报告](examples/demo.report.json)、[逐项差异](examples/demo.diff.json)。
 
 这是对现有文件格式的研究与工具实现，没有恢复 TheBrain 的软件源码，也没有重建其桌面应用。
 
@@ -59,6 +61,7 @@ python3 -m brain_toolkit validate "work/extracted/TheBrain14 - v2/test2 2025-03-
 python3 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json
 python3 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json --output work/my-demo.brz > work/my-demo.report.json
 python3 -m brain_toolkit validate work/my-demo.brz
+python3 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" work/my-demo.brz > work/my-demo.diff.json
 ```
 
 工具不覆盖已有输出；若需重新生成，请另取一个新文件名。计划中的新节点采用预分配 UUID v4，后续操作可引用它。未指定 UUID 的新实体会自动生成，因此同一计划重复从原件生成的二进制摘要可以不同。
@@ -74,14 +77,16 @@ python3 -m brain_toolkit validate work/my-demo.brz
 | `set_tag` | 添加或移除标签连线 |
 | `set_note` | 新建或更新 Markdown 笔记及附件登记，保留旧 HTML 笔记 |
 | `reuse_icon` | 在已研究的简单同类节点间复用已有 PNG 图标模板 |
-| `update_field` | 更新已有属性实例的已有标量值 |
+| `update_field` | 更新已有整数/小数属性的 `DecimalValue`，校验类型和数值范围 |
+| `compare` | 按 UUID 查看记录增删改、字段前后值和成员字节变化 |
 
-精确参数和限制见 [skill](skills/brz-edit/SKILL.md)。工具保留未知字段、不相关成员、未改记录原始字节及日志；不会随意重建整份脑图。整个计划失败时不产生部分编辑结果，源摘要不匹配、引用错误或输出冲突会被拒绝。
+精确参数和限制见 [skill](skills/brz-edit/SKILL.md)。工具保留未知字段、不相关成员、未改记录原始字节及日志。重复设置同一类型或标签不会重建关系；有附属内容的连线会拒绝直接删除。整个计划失败时不产生部分编辑结果，源摘要不匹配、引用错误或输出冲突会被拒绝；输出发布前还会重新读入并核对实际字节。
 
 ## 使用边界
 
 - 仅编辑 `ExchangeFormatVersion=5` 的已研究结构；父子关系允许多个父节点，不将图强行改为树。
-- 图标内部状态串、同步协议及完整属性类型尚未恢复；图标操作有严格的模板限制，笔记编辑保留原有图标缓存，显示效果需应用检查。
+- 图标状态串已确认笔记标记等部分字段；笔记编辑会同步标记并保留其他字段，图标复用仍有严格模板限制。同步协议及完整属性编码未实现，显示效果需应用检查。
+- 对会在 JSON 解析时损失精度的数字明确拒绝，避免悄悄改变数据；暂不支持文本、日期、布尔属性写入。
 - 不删除节点、不合并身份、不创建未知属性定义，不写事件、固定关系或权限。
 - 仓库没有实际本地脑图存储目录，不能确定你提到的 `.dll` 数据文件格式；本工具不直接写本地数据库或同步目录。
 - `validation.errors=[]` 只表示离线检查通过。`application_import_verified` 保持 `false`，直到实际完成原应用往返测试。

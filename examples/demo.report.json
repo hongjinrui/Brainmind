@@ -96,12 +96,12 @@
     {
       "operation": 4,
       "op": "add_link",
-      "id": "26512c7f-428d-44b1-be62-29c567ddc6de"
+      "id": "831948df-e89c-41db-a995-b21d9a3740bc"
     },
     {
       "operation": 5,
       "op": "add_link",
-      "id": "6b25f480-d4c9-4aa9-9c1f-6cc75b085d70"
+      "id": "bc0332bf-380e-4547-b093-bb55b6995043"
     },
     {
       "operation": 6,
@@ -112,7 +112,7 @@
       "operation": 7,
       "op": "reuse_icon",
       "id": "e235c6c3-8582-4cbb-8024-0cb9069002b7",
-      "attachment_id": "48a71f33-5d20-4bcd-8cb1-cb5621442b08",
+      "attachment_id": "e48bf915-fbae-455b-bd67-cf6e6c715b31",
       "from_id": "68a53d65-bb6e-4d9d-847c-f88f71f1e8ae"
     },
     {
@@ -132,7 +132,7 @@
       "operation": 10,
       "op": "set_note",
       "id": "257122e5-fa71-46d7-86c1-bd7be84a4e47",
-      "attachment_id": "827c7cfe-6c2e-4461-8d22-9dfa768ddb1d",
+      "attachment_id": "80085d70-e9fc-4d1a-bed9-b74e03f36c80",
       "bytes": 273
     }
   ],
@@ -144,5 +144,5 @@
   },
   "application_import_verified": false,
   "output": "examples/test2-code-edit-demo.brz",
-  "output_sha256": "1bb1cfc19f5187e4bf33a0778a007f2338dc91dea9f41737b0f8f0c2210f3e55"
+  "output_sha256": "3e4d9973eb67a3d71f0a78da2a1472134b5ac5c131642727c94fe17d7fcaa0a5"
 }

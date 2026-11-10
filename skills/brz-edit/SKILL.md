@@ -7,7 +7,7 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 
 适用于用户明确要求整理、补充或修改 BRZ 脑图的任务。这里的 coding 表示通过代码维护脑图，不要求特定文件名。执行前阅读仓库 `README.md`、`docs/FORMAT.md` 和当前 `python3 -m brain_toolkit --help`；这些文件与本 skill 一起使用。
 
-当前能力仅验证过 BRZ 离线结构。未经原应用人工导入、重新打开及再导出检查，不得声称已完成应用兼容性验证。
+当前能力已验证 BRZ 离线结构，并以官方数据模型完成现有五份样本与修订演示的 JSON 往返检查；结果见 `docs/OFFICIAL-MODEL-CHECK.md`。未经原应用导入、重新打开及再导出检查，不得声称已完成完整应用兼容性验证。
 
 ## 工作流程
 
@@ -16,7 +16,7 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 3. 以 UUID 选择已有节点。名称可能重复，不可仅凭文字自动选中第一个。能从上下文唯一定位时继续；存在影响编辑结果的歧义时向用户澄清，同时推进独立工作。
 4. 根据用户目标创建 JSON 计划，必须含原 BRZ 的 `source_sha256`；列清具体操作、目标 UUID、新名称/笔记、关系端点、复用模板。把草稿、检查结果和中间文件置于 `work/`。用户已授权的日常可逆编辑可直接执行，无须额外确认。
 5. 运行 `python3 -m brain_toolkit apply work/input.brz --plan work/edit.plan.json` 预演；**省略 `--output` 即为 dry-run，没有 `--dry-run` 参数**。检查修改清单后，增加 `--output work/edited.brz` 执行计划写副本，再运行 `python3 -m brain_toolkit validate work/edited.brz`。输入输出必须为不同路径，且输出文件不能已经存在。
-6. 核对原件 SHA-256 未变、未涉及成员及记录未变、计划操作均完成、没有悬空引用；保留变更报告和新文件摘要。若发现原样本已有警告，单列为原有问题，不随意扩展修改范围。
+6. 运行 `python3 -m brain_toolkit compare work/input.brz work/edited.brz > work/edit.diff.json`，核对原件 SHA-256 未变、未涉及成员及记录未变、计划操作均完成、没有悬空引用；保留变更报告和新文件摘要。比较报告默认每类至多 100 项明细，若有 `truncated=true`，使用 `--limit` 增大上限；不要把截断列表当成全部变化。若发现原样本已有警告，单列为原有问题，不随意扩展修改范围。
 7. 交付编辑副本、改动说明和验证状态。如果环境能运行正常可用的原应用，按 `docs/FORMAT.md` 完成测试脑图导入；否则明确报告“离线结构通过，原应用导入未验证”，保留后续人工检查步骤。
 
 ## 操作选择
@@ -24,13 +24,13 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 | 需求 | 工具操作 | 必须维护的约束 |
 | --- | --- | --- |
 | 改名/标签文字/背景色 | `update_thought` | 仅允许 `Name`、`Label`、`BackgroundColor`，保留 UUID；前景色修改不支持 |
-| 新增普通/类型/标签节点 | `add_thought` | `Kind` 仅 1、2、4；新 UUID 不重复；不创建系统节点 |
+| 新增普通/类型/标签节点 | `add_thought` | `Kind` 仅 1、2、4；新 UUID 不重复；类型默认 Label=Name、标签默认图标前缀 8 |
 | 添加/移除普通父子或跳转 | `add_link` / `remove_link` | 父子 A=父 B=子；跳转为联系；不得使用普通移除误删类型/标签关系 |
 | 改普通节点类型 | `set_type` | 仅 `Kind=1` 目标，同步 `TypeId` 与 `Meaning=2` link；已有 `Kind=2` 类型层级用 `Meaning=3`，保留且不编辑 |
 | 添加/移除标签 | `set_tag` | 使用 `Kind=4` 标签与 `Meaning=5` link；不靠改 `TagIds` |
-| 更新/新建 Markdown 笔记 | `set_note` | 同步附件元数据、真实 UTF-8 长度和文件成员；保留旧 HTML 与 `ThoughtIconInfo`，应用笔记标记可能需刷新 |
+| 更新/新建 Markdown 笔记 | `set_note` | 同步附件元数据、UTF-8 长度、文件成员和状态串的笔记布尔段；按修改时间选最新笔记，保留其他状态段及旧 HTML |
 | 复用已有图标 | `reuse_icon` | 同 BRZ、同 `Kind` 的简单图标模板；目标无类型/标签/笔记/其他附件，已有图标不替换 |
-| 修改已有属性值 | `update_field` | 仅更新已有字段实例的已有值字段；不推断完整属性类型枚举 |
+| 修改已有属性值 | `update_field` | 仅已有 Integer/Decimal 定义的 DecimalValue；整数必须整值、数值满足 .NET Decimal 范围和精度 |
 
 计划顶层只允许 `source_sha256` 与 `operations`。各操作参数如下；未知键会被拒绝，创建记录的 `id` 可省略由工具生成，但需要在后续操作引用的新节点应预先分配 UUID v4。
 
@@ -44,7 +44,7 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 | `set_tag` | `id`（普通节点），`tag_id`，`present`（布尔值） |
 | `set_note` | `id`（普通节点），`text`（完整 Markdown 字符串） |
 | `reuse_icon` | `id`（目标），`from_id`（同 `Kind` 模板节点）；来源缓存串为 `7::0:False:False:0:`，目标为简单 `1::0:False:False:0:` 或 `7::0:False:False:0:`，目标无类型/标签/附件状态 |
-| `update_field` | `id`（字段实例 UUID），`value`；保留已有标量 JSON 类型 |
+| `update_field` | `id`（字段实例 UUID），`value`（数值）；只支持 DataType=2/3 的 DecimalValue |
 
 最小计划示例（将摘要和 UUID 替换为本次 `inspect` 的实际值）：
 
@@ -70,6 +70,9 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 - 同名节点保留各自身份；已有 UUID v4/v5 不重算。新 UUID 可用 v4，未知 v5 namespace 不猜测。
 - 保留未知字段、日志、同步点、墓碑、权限和未修改附件；不宣称实现云同步。不要直接编辑运行中的数据库或用户描述但尚无样本的 `.dll` 存储。
 - 不批量修正无关历史问题。原样本的附件 `DataLength` 可能已有差异，依据当前编辑范围解释警告。
+- 重复设置相同类型/标签是无变更操作。带笔记、属性、事件或成员文件的连线不能直接删除；更换类型需要丢弃旧连线样式或未知字段时也拒绝执行。遇到这类拒绝，先说明附属内容及需要保留的信息，不直接删除依赖来绕过检查。
+- 笔记编辑要求可识别的七段状态串和时间戳，只更新位置 3；位置 5 是日历事件数量。旧 HTML 若时间戳更晚，刚写入的 Markdown 不一定成为应用显示笔记，需结合报告和应用检查说明。
+- 属性编码不确定、或 JSON 数字会发生精度损失时停止对应写操作；不把这些值强行转为浮点数或猜测日期/布尔编码。格式依据见 `docs/STATIC-EVIDENCE.md`。
 
 ## 原应用验证
 

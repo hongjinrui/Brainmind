@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from .archive import Archive, ArchiveError, _json
+from .diff import compare_archives
 
 
 def emit(value):
@@ -46,6 +47,10 @@ def parser() -> argparse.ArgumentParser:
     inspect.add_argument("--note-limit", type=int, default=20000, help="每份笔记最多显示的字符数（最多 1000000）")
     validate = commands.add_parser("validate", help="检查内部引用与附件；不代表原软件导入测试")
     validate.add_argument("source", type=Path)
+    compare = commands.add_parser("compare", help="比较两份 BRZ 的节点、连线、元数据与成员字节")
+    compare.add_argument("source", type=Path)
+    compare.add_argument("target", type=Path)
+    compare.add_argument("--limit", type=int, default=100, help="每类明细的数量上限；报告包含总数和截断标志")
     apply = commands.add_parser("apply", help="执行 JSON 修改计划；不指定 --output 时仅预演")
     apply.add_argument("source", type=Path)
     apply.add_argument("--plan", type=Path, required=True)
@@ -57,6 +62,17 @@ def main(argv=None) -> int:
     args = parser().parse_args(argv)
     try:
         archive = Archive(args.source)
+        if args.command == "compare":
+            target = Archive(args.target)
+            validations = {"source": archive.validate(), "target": target.validate()}
+            if any(check["errors"] for check in validations.values()):
+                emit({"error": "Comparison requires structurally valid inputs", "validation": validations})
+                return 1
+            result = compare_archives(archive, target, limit=args.limit)
+            result["validation"] = validations
+            result["application_import_verified"] = False
+            emit(result)
+            return 0
         if args.command == "inspect":
             result = archive.summary()
             result["validation"] = archive.validate()
