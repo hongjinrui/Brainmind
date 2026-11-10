@@ -1,0 +1,409 @@
+{
+  "source_sha256": "0af7b502f6fa9cf6fd169a0b65ae18212e6d76433124466eafa6396f7b2678e5",
+  "native_export_sha256": "ae69836e9c16a46b0546958754dd6a5871b4af8f5345174b1be14f7839e6a1cf",
+  "source_unchanged": true,
+  "native_export_unchanged": true,
+  "independent_audit": "TheBrain UI import/reopen/re-export was performed by the parent agent; this script verifies the resulting archive semantically and by payload bytes",
+  "native_roundtrip": {
+    "validation": {
+      "errors": [],
+      "warnings": []
+    },
+    "names_preserved": 38,
+    "notes_byte_identical": 38,
+    "parent_links_preserved": 37,
+    "jump_links_preserved": 13,
+    "colors_preserved": [
+      {
+        "name": "01 使用边界",
+        "argb": -2364674,
+        "preserved": true
+      },
+      {
+        "name": "02 可信 AI 的七个维度",
+        "argb": -2294553,
+        "preserved": true
+      },
+      {
+        "name": "03 GOVERN：建立责任机制",
+        "argb": -792321,
+        "preserved": true
+      },
+      {
+        "name": "04 MAP：理解使用情境",
+        "argb": -3147010,
+        "preserved": true
+      },
+      {
+        "name": "05 MEASURE：用证据检验",
+        "argb": -68665,
+        "preserved": true
+      },
+      {
+        "name": "06 MANAGE：处理与持续改进",
+        "argb": -6938,
+        "preserved": true
+      },
+      {
+        "name": "07 落地工作台",
+        "argb": -2037761,
+        "preserved": true
+      }
+    ],
+    "source_citations_preserved": 38,
+    "brain_id_unchanged": true,
+    "thought_ids_unchanged": true,
+    "note_checks": [
+      {
+        "name": "AI 风险管理：从框架到行动",
+        "bytes": 1414,
+        "sha256": "9151cafa604a7383202c7f3c19394c95cc87e82d0455bbc4fcad475fe5bc3420",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "01 使用边界",
+        "bytes": 448,
+        "sha256": "b87fe8e9765d15969da850f96f25e1187bb38cf149c5cc4d9cb8d66b4c6869c8",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "自愿框架与版本",
+        "bytes": 491,
+        "sha256": "a403f82a1116325d543a2d7e3df8b629ab2ed1d9c3eab6895ccc68a9b7f738e3",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "生命周期与多方视角",
+        "bytes": 516,
+        "sha256": "dabcce66e485e8a70a6b99ef93b144c56520ef03909b1b2452a00dc5d75f3f73",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "风险、收益与优先级",
+        "bytes": 538,
+        "sha256": "a3a92cb6bad033baf7d6f87063f5dbf6d57a6f781283c938b4bc3db0d40b36a3",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "02 可信 AI 的七个维度",
+        "bytes": 490,
+        "sha256": "40b9460226c9aa70e545787dae584e8f91079dcfa535185cd7c3d15e42bc763f",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "有效且可靠",
+        "bytes": 483,
+        "sha256": "bf6379ec9a9f2ca2f5633ea561adf2017faec9019d9350da1e12eb1d16bfb164",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "避免造成伤害",
+        "bytes": 492,
+        "sha256": "64ddace61eee55e7f9c1b843f1aa826fad976faff84c67d2b7018a4b5aa2dd08",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "安全防护与恢复能力",
+        "bytes": 496,
+        "sha256": "3815e5fdd30ed9d01a243bd766842150763716e2adf97517184ed18339506cc5",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "责任清晰与信息透明",
+        "bytes": 495,
+        "sha256": "5d801c33f4c4c63d6d85bc0ff7a50900a37ff1e894db6618990a22adce3c0246",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "解释机制与理解结果",
+        "bytes": 486,
+        "sha256": "baf5b4adfa3aacdc45c36f67e38dfafd5b0355b06551c14fd680bbc2e88bad53",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "隐私保护",
+        "bytes": 484,
+        "sha256": "20b6443551f5d689412a145bf0df8310b02544a1d688802289ed0cb5b8bec140",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "公平与有害偏差",
+        "bytes": 490,
+        "sha256": "8914432e5941816a74c1e07e02e11146bc443aa268af4b7da195cca8b92249dd",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "03 GOVERN：建立责任机制",
+        "bytes": 474,
+        "sha256": "2483456454bca7da21c5382b7dcf988fa13e50edcdd06ea10a55dadef7744115",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "责任人与决策权限",
+        "bytes": 477,
+        "sha256": "27a9bfa162128993cbd0ef11648970220f3d39a0d2d6ac7e37bbc09733a90686",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "规则、清单与复查",
+        "bytes": 503,
+        "sha256": "31e96003cde11c38c3fea1fbe22216e383893cb15032695ab6e582a640cfa8b3",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "收集反馈并闭环",
+        "bytes": 492,
+        "sha256": "a990b0f86dc28bf57c4efce26e7c5870c84e2424588549c3333757a8c8daf10b",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "第三方组件与数据",
+        "bytes": 480,
+        "sha256": "0ad89542c47398b776bcf46bf3b5b75080b8f51f0d687b5809c5e89c951b1e24",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "04 MAP：理解使用情境",
+        "bytes": 483,
+        "sha256": "7fb13644fea6e470caf8c864cc5eac1a6cdeb5c9790af6d78bdcecf731feb856",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "用途、用户与使用环境",
+        "bytes": 486,
+        "sha256": "f200f8c9ccbb1d70d3ce360ea975ffc333945c065246935bd1a167fbfa71a9a3",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "受影响者与失败后果",
+        "bytes": 503,
+        "sha256": "08a75b4f1155a2884a29e29334482c6321a978e38ca233bc7ccc6a1747626c89",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "能力、知识边界与人工监督",
+        "bytes": 501,
+        "sha256": "05fb9f64d3e059ef0c52c6f9a7bfa8635e6387b947035f68ce0f6422a75e5c76",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "基准、成本与替代方案",
+        "bytes": 492,
+        "sha256": "a285420cb5936f80512b4ac77ee39c694b8aefcfb47f7a1a66ae83c8f7f273da",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "05 MEASURE：用证据检验",
+        "bytes": 457,
+        "sha256": "88a438f8a66372c126421d0ea8676c27f8c37c96187d86481cfad72a83a93345",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "代表性测试与现实条件",
+        "bytes": 489,
+        "sha256": "563487c376a1ad427c2a0c7c8e6c0717442fdda6c933b2731eeb0c29363ab172",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "独立复核",
+        "bytes": 468,
+        "sha256": "90020044b21f3141c2eda8e431d3b20752a08f63395dff3204077c22dd2f279e",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "不确定性与未测项目",
+        "bytes": 489,
+        "sha256": "b1feece5f7bdcf129c0bd2c0173957e2e718987f291dca517867255fa28904ff",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "运行监测与反馈入口",
+        "bytes": 502,
+        "sha256": "0eff31e1ed26258ab75ea0b9b73104cd0aca02f8a518382fa5019794f983d1a9",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "06 MANAGE：处理与持续改进",
+        "bytes": 456,
+        "sha256": "ee2e05a4a5040dc9c58677c549053a0475ab40a33168013f8dc0b1e58db1b121",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "优先级与继续条件",
+        "bytes": 473,
+        "sha256": "6378bf7a3d24960395d8d03c43f476eaa2bdc2a18561754880c0170c5797588a",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "记录剩余风险",
+        "bytes": 489,
+        "sha256": "f32652b7aaa8bcf3121a0c9dad6d3b95512c2459f722cbb604c20818fabd1e88",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "回退、停用与替代路径",
+        "bytes": 489,
+        "sha256": "14f52b3c621684b75ad6fe030e7e908182850b0f8b0e653fe9e0d74ea06e25c8",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "事件处理与改进循环",
+        "bytes": 497,
+        "sha256": "41f298b07bfa97fae75bd89bc68d9a027072be35d39a9aae5e1ecf96af8cafa6",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "07 落地工作台",
+        "bytes": 466,
+        "sha256": "e29322a7fc4ca897d45d4ffff46dad59c6fa8d1652a48485d82f1da2e7478723",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "当前状态卡",
+        "bytes": 489,
+        "sha256": "c4e584c2c317941d6fbd1d2ed5dea7edb33cec54a5742a78c93410d0b424163f",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "目标与差距清单",
+        "bytes": 503,
+        "sha256": "a3b09a93502573f458f12b47e92fd31bea992ab5840cad6a55c35718afec0a9e",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "案例：PDF 到成品脑图",
+        "bytes": 541,
+        "sha256": "06c44f7abc05895d2d6a3cdd1cd4d4d4820f7b3a08efdb0916c0da2b5459e63b",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      },
+      {
+        "name": "复盘问题与阅读路径",
+        "bytes": 561,
+        "sha256": "18f49e800aeb107e1fdfc0557e5b0ff64111fb64c126b4e6bdf59aa974cd08da",
+        "source_page_reference_preserved": true,
+        "native_payload_identical": true
+      }
+    ],
+    "metadata_changes_without_values": {
+      "attachments.json": {
+        "added": 0,
+        "removed": 0,
+        "changed": 6,
+        "changed_field_counts": {
+          "CreationDateTime": 5,
+          "FileModificationDateTime": 1,
+          "ModificationDateTime": 1
+        }
+      },
+      "links.json": {
+        "added": 0,
+        "removed": 0,
+        "changed": 5,
+        "changed_field_counts": {
+          "CreationDateTime": 5,
+          "ModificationDateTime": 5
+        }
+      },
+      "syncpoints.json": {
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "changed_field_counts": {}
+      },
+      "thoughts.json": {
+        "added": 0,
+        "removed": 0,
+        "changed": 7,
+        "changed_field_counts": {
+          "ModificationDateTime": 1,
+          "CreationDateTime": 4,
+          "ActivationDateTime": 2
+        }
+      }
+    },
+    "changed_meta_fields": [],
+    "changed_member_names": [
+      "attachments.json",
+      "links.json",
+      "meta.json",
+      "syncpoints.json",
+      "thoughts.json"
+    ]
+  },
+  "followup_edit": {
+    "output_filename": "nist-reading-checkpoint.brz",
+    "sha256": "2648fec364c8eb21dc828b5a0dc1da917a70ae838c7b749f77e7416260e61501",
+    "target_name": "有效且可靠",
+    "operation_count": 2,
+    "all_38_names_unchanged": true,
+    "all_50_links_unchanged": true,
+    "all_7_colors_unchanged": true,
+    "untouched_notes_byte_identical": 37,
+    "original_target_note_preserved_as_prefix": true,
+    "validation": {
+      "errors": [],
+      "warnings": []
+    },
+    "changed_members": [
+      "attachments.json",
+      "fe383c57-c7e2-4b15-b0ba-8305e8cea933/Notes.md",
+      "thoughts.json"
+    ],
+    "unchanged_member_count": 48,
+    "application_import_verified": false
+  },
+  "application_test": {
+    "date": "2026-11-10",
+    "platform": "Windows",
+    "version": "TheBrain 14.0.102.0",
+    "steps": [
+      "import as a separate test brain",
+      "inspect root, dimensions branch, jump and Chinese notes",
+      "close and reopen",
+      "native BRZ export"
+    ],
+    "scope": "UI spot checks plus all-node, all-edge, all-note-byte and seven-color verification of the native export"
+  },
+  "source_pdf": {
+    "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+    "version": "2023 AI RMF 1.0",
+    "embedded": false
+  }
+}

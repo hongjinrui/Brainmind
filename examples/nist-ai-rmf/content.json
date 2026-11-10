@@ -1,0 +1,447 @@
+{
+  "schema_version": 1,
+  "title": "AI 风险管理：从框架到行动",
+  "subtitle": "NIST AI RMF 1.0 中文知识脑图与开源工具实践",
+  "created_at": "2026-11-10",
+  "author": "Codex",
+  "source": {
+    "title": "Artificial Intelligence Risk Management Framework (AI RMF 1.0)",
+    "author": "Elham Tabassi",
+    "publisher": "National Institute of Standards and Technology (NIST)",
+    "publication": "NIST AI 100-1",
+    "published": "2023-01-26",
+    "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf",
+    "doi": "https://doi.org/10.6028/NIST.AI.100-1",
+    "pdf_pages": 48,
+    "page_numbering": "正文页码1对应PDF第6页；PDF页码=正文页码+5",
+    "license_url": "https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications",
+    "attribution": "Republished courtesy of the National Institute of Standards and Technology.",
+    "adaptation_notice": "2026-11-10：中文概括、知识结构重组、加入原创实践提示。非官方译文，无背书。",
+    "version_notice": "本图固定解释2023年1.0；制作时NIST主页说明1.0正在修订。"
+  },
+  "design": {
+    "main_branches": 7,
+    "node_count": 38,
+    "parent_link_count": 37,
+    "jump_link_count": 13,
+    "categories": [
+      "导览",
+      "概念",
+      "行动",
+      "证据",
+      "实践"
+    ],
+    "notes": "每个节点有中文Markdown、正文页码与PDF深链接。跳转理由为作者的知识组织判断。"
+  },
+  "nodes": [
+    {
+      "key": "root",
+      "name": "AI 风险管理：从框架到行动",
+      "parent_key": null,
+      "category": "导览",
+      "source_pages": "1–3、20–21",
+      "source_pdf_page": 6,
+      "note": "# AI 风险管理：从框架到行动\n\n把风险管理放进 AI 系统的整个生命周期；治理、情境、测量、处置共同作用。\n\n**实践提示（原创）**\n\n阅读顺序可从“使用边界”进入，再把自己的项目放进“落地工作台”。节点中的实践提示是本脑图作者设计的练习，不是 NIST 原文要求。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=6)，正文第 1–3、20–21 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。\n\n**版本与来源**\n\nElham Tabassi (2023), *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*, NIST AI 100-1, National Institute of Standards and Technology. [DOI](https://doi.org/10.6028/NIST.AI.100-1)。Republished courtesy of the National Institute of Standards and Technology.\n\n本脑图由 Codex 于 2026-11-10 重新组织为中文知识图，并加入原创实践问题；不表示 NIST 认可本项目。截至制作时，[NIST 项目页](https://www.nist.gov/itl/ai-risk-management-framework)说明 1.0 正在修订，本图仅解释指定的 2023 年版本。\n\n**如何使用**\n\n七个编号分支提供阅读入口；父子关系组织主题，跳转关系连接“概念—行动—证据”。先阅读某个概念，再顺着跳转寻找能用于自己项目的行动与验收证据。"
+    },
+    {
+      "key": "start",
+      "name": "01 使用边界",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "1–3、7、20–21",
+      "source_pdf_page": 6,
+      "note": "# 01 使用边界\n\nAI RMF 1.0 是可按情境使用的自愿框架。\n\n**实践提示（原创）**\n\n先明确本次评估的系统、版本、用途与责任人，之后再选择适用的框架内容。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=6)，正文第 1–3、7、20–21 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "start-purpose",
+      "name": "自愿框架与版本",
+      "parent_key": "start",
+      "category": "概念",
+      "source_pages": "2–3",
+      "source_pdf_page": 7,
+      "note": "# 自愿框架与版本\n\n它提供风险管理方法，不替组织设定统一的风险容忍度。\n\n**实践提示（原创）**\n\n本图固定对应 2023 年 1.0 版。用于实际项目时，在原站确认是否已有新版，并另查项目适用要求。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=7)，正文第 2–3 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "start-lifecycle",
+      "name": "生命周期与多方视角",
+      "parent_key": "start",
+      "category": "概念",
+      "source_pages": "9–11、20–21",
+      "source_pdf_page": 14,
+      "note": "# 生命周期与多方视角\n\n设计、部署、使用和评估者拥有不同的信息；治理贯穿全过程。\n\n**实践提示（原创）**\n\n列出开发者、运维者、使用者和受影响者；检查每一类人的意见由谁收集、在哪个决策点进入。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=14)，正文第 9–11、20–21 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "start-risk",
+      "name": "风险、收益与优先级",
+      "parent_key": "start",
+      "category": "概念",
+      "source_pages": "4、7–8",
+      "source_pdf_page": 9,
+      "note": "# 风险、收益与优先级\n\n风险判断同时考虑发生可能性与后果，并应结合使用情境。\n\n**实践提示（原创）**\n\n做一张风险卡：事件、受影响对象、后果、可能性、证据、负责人。先处理严重后果和证据缺口，避免只按发生次数排名。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=9)，正文第 4、7–8 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust",
+      "name": "02 可信 AI 的七个维度",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "12–18",
+      "source_pdf_page": 17,
+      "note": "# 02 可信 AI 的七个维度\n\n可信性涉及多个相互影响的维度，取舍需要结合情境说明。\n\n**实践提示（原创）**\n\n不要用一个总分掩盖短板。为每个相关维度放一项证据、一项限制和一个待解决问题。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=17)，正文第 12–18 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-valid",
+      "name": "有效且可靠",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "13–14",
+      "source_pdf_page": 18,
+      "note": "# 有效且可靠\n\n验证应覆盖预期用途、现实测试条件和持续表现。\n\n**实践提示（原创）**\n\n为脑图编辑器设置三组验收：结构正确、内容完整、原应用可打开；一次成功不代替后续版本回归。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=18)，正文第 13–14 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-safe",
+      "name": "避免造成伤害",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "14–15",
+      "source_pdf_page": 19,
+      "note": "# 避免造成伤害\n\n设计、测试、监测和必要的人为介入共同支持安全运行。\n\n**实践提示（原创）**\n\n在项目中预先写清：什么异常必须停止写入、什么输出必须转交人工确认，以及如何恢复到原件。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=19)，正文第 14–15 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-secure",
+      "name": "安全防护与恢复能力",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "15",
+      "source_pdf_page": 20,
+      "note": "# 安全防护与恢复能力\n\n防止攻击和在不利事件后恢复是相关但不同的能力。\n\n**实践提示（原创）**\n\n分别演练“非法输入被拒绝”和“合法操作中断后能恢复”；记录两者的证据，不用同一个测试代替。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=20)，正文第 15 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-transparent",
+      "name": "责任清晰与信息透明",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "15–16",
+      "source_pdf_page": 20,
+      "note": "# 责任清晰与信息透明\n\n可追溯的信息有助于理解系统决策与明确责任。\n\n**实践提示（原创）**\n\n保存输入摘要、执行计划、版本号、变更报告和验收状态，让接手者能回答谁改了什么、依据是什么。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=20)，正文第 15–16 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-explain",
+      "name": "解释机制与理解结果",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "16–17",
+      "source_pdf_page": 21,
+      "note": "# 解释机制与理解结果\n\n机制说明与结果在具体情境中的意义需要分别表达。\n\n**实践提示（原创）**\n\n错误报告同时写“哪条约束未满足”和“对用户任务有什么影响”，并给出可行的下一步。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=21)，正文第 16–17 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-privacy",
+      "name": "隐私保护",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "17",
+      "source_pdf_page": 22,
+      "note": "# 隐私保护\n\n隐私设计与数据使用方式、信息暴露和其它可信维度相互影响。\n\n**实践提示（原创）**\n\n公开示例使用公开资料与自建测试内容；检查打包文件是否夹带私人目录、笔记或账号标识。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=22)，正文第 17 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "trust-fair",
+      "name": "公平与有害偏差",
+      "parent_key": "trust",
+      "category": "概念",
+      "source_pages": "17–18",
+      "source_pdf_page": 22,
+      "note": "# 公平与有害偏差\n\n偏差可能来自制度、数据计算过程及人的判断。\n\n**实践提示（原创）**\n\n测试中文、英文、同名节点、长名称和不同路径；这是软件可用性练习，不等同于完成 AI 公平性评估。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=22)，正文第 17–18 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "govern",
+      "name": "03 GOVERN：建立责任机制",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "21–24",
+      "source_pdf_page": 26,
+      "note": "# 03 GOVERN：建立责任机制\n\n治理为其它风险活动提供责任、资源和持续维护机制。\n\n**实践提示（原创）**\n\n把规则写成能执行的责任分工：谁维护输入约束，谁审核异常，谁决定发布。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=26)，正文第 21–24 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "govern-owner",
+      "name": "责任人与决策权限",
+      "parent_key": "govern",
+      "category": "行动",
+      "source_pages": "23，GOVERN 2",
+      "source_pdf_page": 28,
+      "note": "# 责任人与决策权限\n\n风险相关职责与沟通渠道需要明确。\n\n**实践提示（原创）**\n\n为“内容修改、代码发布、原应用导入”分别设责任人和可逆边界；跨边界的动作要有相应授权。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=28)，正文第 23，GOVERN 2 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "govern-policy",
+      "name": "规则、清单与复查",
+      "parent_key": "govern",
+      "category": "行动",
+      "source_pages": "22–23，GOVERN 1",
+      "source_pdf_page": 27,
+      "note": "# 规则、清单与复查\n\n组织规则、系统清单、定期复查和退出安排支持持续治理。\n\n**实践提示（原创）**\n\n维护支持版本与操作列表；新样例引入未知字段时先保留证据，再决定是否扩大支持范围。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=27)，正文第 22–23，GOVERN 1 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "govern-feedback",
+      "name": "收集反馈并闭环",
+      "parent_key": "govern",
+      "category": "行动",
+      "source_pages": "24，GOVERN 4–5",
+      "source_pdf_page": 29,
+      "note": "# 收集反馈并闭环\n\n反馈和事件信息需要能进入后续设计与实现。\n\n**实践提示（原创）**\n\n给 bug 报告设置最小复现模板：版本、输入类型、命令、期望、实际结果；验证修复后补回归用例。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=29)，正文第 24，GOVERN 4–5 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "govern-supply",
+      "name": "第三方组件与数据",
+      "parent_key": "govern",
+      "category": "行动",
+      "source_pages": "24，GOVERN 6",
+      "source_pdf_page": 29,
+      "note": "# 第三方组件与数据\n\n第三方资源的风险及故障处理也属于治理范围。\n\n**实践提示（原创）**\n\n列清依赖、来源和版本；将公开PDF的引用信息与生成脑图一并保存，避免内容失去出处。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=29)，正文第 24，GOVERN 6 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "map",
+      "name": "04 MAP：理解使用情境",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "24–28",
+      "source_pdf_page": 29,
+      "note": "# 04 MAP：理解使用情境\n\n先理解系统用途、限制和影响，再决定如何测量及处置。\n\n**实践提示（原创）**\n\n做一页项目说明：解决什么问题、谁使用、输出怎样进入下一步、失误会影响什么。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=29)，正文第 24–28 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "map-context",
+      "name": "用途、用户与使用环境",
+      "parent_key": "map",
+      "category": "行动",
+      "source_pages": "26，MAP 1",
+      "source_pdf_page": 31,
+      "note": "# 用途、用户与使用环境\n\n用途、预期环境和相关人的需求构成情境基础。\n\n**实践提示（原创）**\n\n为本项目明确“离线编辑 BRZ 副本”；把 Windows、Unicode 路径、TheBrain 版本记录为测试条件。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=31)，正文第 26，MAP 1 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "map-impact",
+      "name": "受影响者与失败后果",
+      "parent_key": "map",
+      "category": "行动",
+      "source_pages": "27–28，MAP 5",
+      "source_pdf_page": 32,
+      "note": "# 受影响者与失败后果\n\n影响分析应覆盖潜在收益、伤害及相关人的反馈。\n\n**实践提示（原创）**\n\n追踪一次失败的后果：只是提示错误，还是可能丢失笔记、附件或脑图结构；优先验证数据完整性。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=32)，正文第 27–28，MAP 5 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "map-limits",
+      "name": "能力、知识边界与人工监督",
+      "parent_key": "map",
+      "category": "行动",
+      "source_pages": "26–27，MAP 2、MAP 3.5",
+      "source_pdf_page": 31,
+      "note": "# 能力、知识边界与人工监督\n\n系统限制和人如何理解、监督输出需要记录。\n\n**实践提示（原创）**\n\n明确哪些附件、字段和版本已验证；遇到未知编码时返回可解释的拒绝，不猜测后写入。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=31)，正文第 26–27，MAP 2、MAP 3.5 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "map-baseline",
+      "name": "基准、成本与替代方案",
+      "parent_key": "map",
+      "category": "行动",
+      "source_pages": "27，MAP 3",
+      "source_pdf_page": 32,
+      "note": "# 基准、成本与替代方案\n\n能力与收益应对照适当基准，并考虑错误代价。\n\n**实践提示（原创）**\n\n比较人工改图、结构化计划和自动生成三种方式；计算复核时间，同时把误修改成本纳入选择。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=32)，正文第 27，MAP 3 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "measure",
+      "name": "05 MEASURE：用证据检验",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "28–31",
+      "source_pdf_page": 33,
+      "note": "# 05 MEASURE：用证据检验\n\n测量结合定量、定性方法，持续为风险决策提供证据。\n\n**实践提示（原创）**\n\n为每条重要结论附上测试输入、预期结果、实际结果和适用条件。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=33)，正文第 28–31 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "measure-data",
+      "name": "代表性测试与现实条件",
+      "parent_key": "measure",
+      "category": "证据",
+      "source_pages": "29，MEASURE 2.1–2.5",
+      "source_pdf_page": 34,
+      "note": "# 代表性测试与现实条件\n\n测试集和测试条件应与实际部署相联系。\n\n**实践提示（原创）**\n\n组合真实导出、最小样例和边界输入；覆盖大小脑图、中文、空表、旧附件及应用再导出。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=34)，正文第 29，MEASURE 2.1–2.5 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "measure-independent",
+      "name": "独立复核",
+      "parent_key": "measure",
+      "category": "证据",
+      "source_pages": "28–29，MEASURE 1.3",
+      "source_pdf_page": 33,
+      "note": "# 独立复核\n\n独立评估可帮助发现开发团队自身的盲点。\n\n**实践提示（原创）**\n\n让另一位使用者只看 skill 和样例独立执行任务；记录其卡住之处，再修正文档或工具。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=33)，正文第 28–29，MEASURE 1.3 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "measure-unknown",
+      "name": "不确定性与未测项目",
+      "parent_key": "measure",
+      "category": "证据",
+      "source_pages": "28–29，MEASURE 1.1",
+      "source_pdf_page": 33,
+      "note": "# 不确定性与未测项目\n\n无法测量的风险和测试限制也应被记录。\n\n**实践提示（原创）**\n\n区分“已通过”“已失败”“未验证”；测试通过只支持覆盖过的条件，不能写成永远无 bug。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=33)，正文第 28–29，MEASURE 1.1 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "measure-monitor",
+      "name": "运行监测与反馈入口",
+      "parent_key": "measure",
+      "category": "证据",
+      "source_pages": "29–31，MEASURE 2.4、3–4",
+      "source_pdf_page": 34,
+      "note": "# 运行监测与反馈入口\n\n运行中的变化与用户反馈应继续影响评估。\n\n**实践提示（原创）**\n\n保留可重放的失败样例和版本信息；格式变化、兼容性回退或新异常出现时重新运行相关验收。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=34)，正文第 29–31，MEASURE 2.4、3–4 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "manage",
+      "name": "06 MANAGE：处理与持续改进",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "31–33",
+      "source_pdf_page": 36,
+      "note": "# 06 MANAGE：处理与持续改进\n\n把测量结果转为资源分配、风险响应和后续监测。\n\n**实践提示（原创）**\n\n每个已确认问题都给出负责人、处理办法、验收证据和遗留限制。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=36)，正文第 31–33 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "manage-priority",
+      "name": "优先级与继续条件",
+      "parent_key": "manage",
+      "category": "行动",
+      "source_pages": "32，MANAGE 1.1–1.3",
+      "source_pdf_page": 37,
+      "note": "# 优先级与继续条件\n\n风险处置按影响、可能性和可用资源安排。\n\n**实践提示（原创）**\n\n先修复阻止基本流程或可能损坏内容的问题；发布前明确什么失败必须阻断输出。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=37)，正文第 32，MANAGE 1.1–1.3 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "manage-residual",
+      "name": "记录剩余风险",
+      "parent_key": "manage",
+      "category": "行动",
+      "source_pages": "32，MANAGE 1.4",
+      "source_pdf_page": 37,
+      "note": "# 记录剩余风险\n\n处置之后仍存在的负面风险需要告知下游与用户。\n\n**实践提示（原创）**\n\n在交付中写清已测 TheBrain 版本和样例范围；将未覆盖格式单独列出，避免测试结果被过度解读。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=37)，正文第 32，MANAGE 1.4 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "manage-fallback",
+      "name": "回退、停用与替代路径",
+      "parent_key": "manage",
+      "category": "行动",
+      "source_pages": "32，MANAGE 2",
+      "source_pdf_page": 37,
+      "note": "# 回退、停用与替代路径\n\n响应机制需要包含异常恢复及必要的停用安排。\n\n**实践提示（原创）**\n\n保留源文件，写入新副本；失败时清理临时文件并不覆盖已有结果，必要时回到人工处理。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=37)，正文第 32，MANAGE 2 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "manage-incident",
+      "name": "事件处理与改进循环",
+      "parent_key": "manage",
+      "category": "行动",
+      "source_pages": "33，MANAGE 4",
+      "source_pdf_page": 38,
+      "note": "# 事件处理与改进循环\n\n部署后的监测、沟通、恢复和变更管理构成持续改进。\n\n**实践提示（原创）**\n\n按“复现 → 修复 → 回归 → 发布 → 观察”记录事件，区分原因已确认与仍在调查的部分。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=38)，正文第 33，MANAGE 4 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "practice",
+      "name": "07 落地工作台",
+      "parent_key": "root",
+      "category": "导览",
+      "source_pages": "20–21、33–34",
+      "source_pdf_page": 25,
+      "note": "# 07 落地工作台\n\n可通过当前状态与目标状态的比较，为具体项目组织行动。\n\n**实践提示（原创）**\n\n这一分支把框架用于本次开源脑图工具，属于作者设计的实践模板。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=25)，正文第 20–21、33–34 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "practice-current",
+      "name": "当前状态卡",
+      "parent_key": "practice",
+      "category": "实践",
+      "source_pages": "33，Profiles",
+      "source_pdf_page": 38,
+      "note": "# 当前状态卡\n\n当前画像描述已经实现的风险管理结果。\n\n**实践提示（原创）**\n\n填写五项：支持的输入、运行环境、测试证据、真实应用验收、尚未解决的问题。每项都链接到可复查材料。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=38)，正文第 33，Profiles 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "practice-target",
+      "name": "目标与差距清单",
+      "parent_key": "practice",
+      "category": "实践",
+      "source_pages": "33–34，Profiles",
+      "source_pdf_page": 38,
+      "note": "# 目标与差距清单\n\n目标画像与当前画像之间的差距可转化为行动计划。\n\n**实践提示（原创）**\n\n把“skill 可用”拆成可验证目标：能发现工具、能做正确预演、能写副本、能导入重开、能再编辑。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=38)，正文第 33–34，Profiles 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "practice-case",
+      "name": "案例：PDF 到成品脑图",
+      "parent_key": "practice",
+      "category": "实践",
+      "source_pages": "20–21、33",
+      "source_pdf_page": 25,
+      "note": "# 案例：PDF 到成品脑图\n\n本案例用四个功能组织一次可复查的交付。\n\n**实践提示（原创）**\n\nGOVERN：只改项目范围。MAP：选择公开PDF与读者目标。MEASURE：检查笔记、关系、附件及应用往返。MANAGE：修复失败并留下限制与复现材料。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=25)，正文第 20–21、33 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    },
+    {
+      "key": "practice-review",
+      "name": "复盘问题与阅读路径",
+      "parent_key": "practice",
+      "category": "实践",
+      "source_pages": "20–21、33–34",
+      "source_pdf_page": 25,
+      "note": "# 复盘问题与阅读路径\n\n框架功能可按需求迭代使用，而不是一次性顺序清单。\n\n**实践提示（原创）**\n\n复盘四问：任务边界变了吗？证据足够吗？还有谁受影响？下一次先测什么？深入阅读时依次查看正文20页图5、22–33页表1–4、33页画像。\n\n**出处**\n\n[NIST AI RMF 1.0 官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf#page=25)，正文第 20–21、33–34 页（阅读器页码比正文页码多 5）。本节点为中文概括与实践扩展，非官方译文。"
+    }
+  ],
+  "jumps": [
+    {
+      "a": "start-risk",
+      "b": "manage-priority",
+      "reason": "风险的可能性与后果用于安排处置优先级"
+    },
+    {
+      "a": "trust-valid",
+      "b": "measure-data",
+      "reason": "有效可靠需要现实测试条件中的证据"
+    },
+    {
+      "a": "trust-safe",
+      "b": "manage-fallback",
+      "reason": "避免伤害需要可执行的回退与停用机制"
+    },
+    {
+      "a": "trust-transparent",
+      "b": "govern-owner",
+      "reason": "可追责的信息应连接到明确责任人"
+    },
+    {
+      "a": "trust-explain",
+      "b": "map-limits",
+      "reason": "解释结果时要让用户知道能力边界"
+    },
+    {
+      "a": "trust-privacy",
+      "b": "govern-supply",
+      "reason": "来源与第三方资源管理也要考虑隐私"
+    },
+    {
+      "a": "govern-feedback",
+      "b": "measure-monitor",
+      "reason": "反馈入口与运行监测共同支持迭代"
+    },
+    {
+      "a": "map-context",
+      "b": "measure-data",
+      "reason": "使用情境决定代表性测试条件"
+    },
+    {
+      "a": "map-impact",
+      "b": "manage-priority",
+      "reason": "失败后果影响问题处理顺序"
+    },
+    {
+      "a": "measure-unknown",
+      "b": "manage-residual",
+      "reason": "未测限制与处置后剩余风险都需说明"
+    },
+    {
+      "a": "measure-independent",
+      "b": "practice-target",
+      "reason": "独立执行检验skill目标能否达成"
+    },
+    {
+      "a": "manage-incident",
+      "b": "practice-current",
+      "reason": "修复与验收证据更新当前状态画像"
+    },
+    {
+      "a": "practice-case",
+      "b": "measure-independent",
+      "reason": "成品交付需要独立复核"
+    }
+  ]
+}

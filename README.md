@@ -2,7 +2,7 @@
 
 本仓库现在包含一套 **实验性的 BRZ 离线编辑工具**。无需找回原软件源代码，即可读取现有导出包、按 UUID 修改节点及关系，输出新的 BRZ 副本。工具只用 Python 标准库，要求 Python 3.10 或更新版本。
 
-已验证五份现有 BRZ 的文件结构、编辑后的内部一致性，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查。**11 项操作演示已在 Windows 的 TheBrain 14.0.102.0 中完成导入、关闭重开和再导出，修改内容与原有附件保留**，具体范围见[验证记录](docs/VALIDATION.md)。这是针对该样本的结果，不代表所有 BRZ 或软件版本都兼容。首次使用仍应导入独立测试脑图；原始四卷和其中的原始 BRZ 均保持不变。
+已验证五份现有 BRZ 的文件结构，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查。**11 项操作演示及 38 节点的 NIST AI RMF 中文成品脑图，已在 Windows 的 TheBrain 14.0.102.0 中完成导入、关闭重开和再导出**，具体界面检查与数据核对范围见[验证记录](docs/VALIDATION.md)。这些结果不代表所有 BRZ 或软件版本都兼容。首次使用仍应导入独立测试脑图；原始四卷和其中的原始 BRZ 均保持不变。
 
 ## 从哪里开始
 
@@ -13,6 +13,7 @@
 - [输入清单与哈希](docs/INVENTORY.json)：四卷及五份 BRZ 的摘要和记录数量。
 - [验证记录](docs/VALIDATION.md)：自动检查、示例变化、原应用测试状态。
 - [演示计划](examples/demo.plan.json)、[演示 BRZ](examples/test2-code-edit-demo.brz)、[演示报告](examples/demo.report.json)、[逐项差异](examples/demo.diff.json)。
+- [PDF 到成品脑图示例](examples/nist-ai-rmf/README.md)：NIST AI RMF 1.0 中文知识图，提供 38 节点的来源笔记及可复现计划生成器。
 
 这是对现有文件格式的研究与工具实现，没有恢复 TheBrain 的软件源码，也没有重建其桌面应用。
 
@@ -66,6 +67,14 @@ python3 -X utf8 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2
 
 工具不覆盖已有输出；若需重新生成，请另取一个新文件名。计划中的新节点采用预分配 UUID v4，后续操作可引用它。未指定 UUID 的新实体会自动生成，因此同一计划重复从原件生成的二进制摘要可以不同。
 
+## 从公开 PDF 制作成品
+
+[NIST AI RMF 示例](examples/nist-ai-rmf/README.md) 将 [2023 年官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf) 重组为“AI 风险管理：从框架到行动”：7 个主分支、38 个节点、37 条父子关系、13 条跨主题跳转和 38 份中文来源笔记。摘要与原创实践提示分开标明；笔记附页码与 PDF 链接，未嵌入 PDF 文件。
+
+从 TheBrain 原生导出的空白测试脑图开始，运行 [build_plan.py](examples/nist-ai-rmf/build_plan.py) 生成绑定该输入摘要的 133 操作计划，再用同一 CLI 预演、写出和验收。可修改 [content.json](examples/nist-ai-rmf/content.json) 中的知识结构后生成新计划；生成器会明确替换选定根节点的名称与整份笔记，其他已有节点保持不变。完整命令和输入限制见示例说明。
+
+本次原生再导出后，全量核对名称、关系、笔记、来源链接和颜色均保留；再基于该文件修改一个节点的 Label 和笔记也通过离线校验。第二次编辑尚未重新导入桌面应用，详细变更范围见[成品验收记录](docs/VALIDATION.md#公开-pdf-成品nist-ai-rmf-10)。
+
 ## 支持的操作
 
 | 操作 | 能力 |
@@ -110,3 +119,5 @@ python3 -X utf8 -m unittest discover -s tests -v
 合成测试无需任何第三方库或原始分卷，适合开源贡献者直接运行。[跨平台 CI](.github/workflows/tests.yml) 在 Ubuntu 和 Windows、Python 3.10/3.13/3.14 上运行同一测试命令；CI 通过不代替 TheBrain 桌面验收。恢复到上述路径的五份原始导出还会参加可选的实样本检查，未提供这些文件时该项会明确跳过。
 
 测试重点是引用一致性、事务回退、原始字节保留和文件写入边界，还覆盖 Windows 文件同步、旧代码页下中文/emoji 报告、原生访问记录复合键、保守保留导出壁纸，以及笔记文件被其他附件共用时拒绝覆盖。
+
+第一批稳定性修复提交 `e7f3b34489a14d41601d34d26a6c8916cc1de6da` 的 [6 组 CI 检查](https://github.com/hongjinrui/Brainmind/actions/runs/42829276774) 全部通过。加入成品计划生成器的 3 项回归后，本地 Windows 测试为 78 项通过；完整记录与具体版本见 [VALIDATION.md](docs/VALIDATION.md)。后续提交应查看自身的 CI 结果。
