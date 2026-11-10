@@ -1,0 +1,26 @@
+{
+  "title": "资料阅读入门",
+  "nodes": [
+    {
+      "key": "reading",
+      "name": "资料阅读入门",
+      "note": "# 资料阅读入门\n\n这是技能包自带的最小示例，验证中文笔记、父子关系和跳转。\n\n来源：本技能包的原创演示内容，不是外部文献摘要。"
+    },
+    {
+      "key": "questions",
+      "parent_key": "reading",
+      "name": "带着问题阅读",
+      "background_color": -2360066,
+      "note": "# 带着问题阅读\n\n先写下想回答的问题，再记录材料中的依据与页码。"
+    },
+    {
+      "key": "evidence",
+      "parent_key": "reading",
+      "name": "记录来源与证据",
+      "note": "# 记录来源与证据\n\n在笔记中区分资料结论和自己的理解；公开资料附原始链接，PDF 附页码。"
+    }
+  ],
+  "jumps": [
+    {"a": "questions", "b": "evidence", "reason": "问题需要证据支持"}
+  ]
+}

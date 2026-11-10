@@ -166,6 +166,29 @@ class Archive:
         "fielddefinitions", "fieldinstances",
     )}
 
+    @classmethod
+    def empty(cls):
+        """Start a new v5 archive without reading or borrowing any BRZ.
+
+        Tables start empty; the content creator adds the documented minimum
+        brain-name/home settings with their brain-specific IDs. No existing
+        settings, history, permissions or account identifiers are copied.
+        """
+        result = cls.__new__(cls)
+        result.path = None
+        result.source_sha256 = None
+        result.meta = {"BrainId": str(uuid.uuid4()), "ExchangeFormatVersion": 5,
+                       "AttachmentFileStates": {}}
+        result._meta_original = b"\xef\xbb\xbf" + _encode(result.meta)
+        result._meta_initial = copy.deepcopy(result.meta)
+        result._members = {name: b"\xef\xbb\xbf" for name in sorted(cls.TABLES)}
+        result._members["meta.json"] = result._meta_original
+        result._tables = {name: _Table() for name in sorted(cls.TABLES)}
+        result._infos = {}
+        result._comment = b""
+        result._changed = []
+        return result
+
     def __init__(self, path):
         self.path = Path(path).resolve()
         if self.path.stat().st_size > self.MAX_TOTAL_BYTES:
@@ -833,7 +856,7 @@ class Archive:
         if type(self.meta.get("ExchangeFormatVersion")) is not int or self.meta.get("ExchangeFormatVersion") != 5:
             raise ArchiveError("Writing requires ExchangeFormatVersion=5")
         output = Path(output).absolute()
-        if output.resolve() == self.path:
+        if self.path is not None and output.resolve() == self.path:
             raise ArchiveError("Output must be a separate file")
         if os.path.lexists(output):
             raise ArchiveError(f"Output already exists: {output}")

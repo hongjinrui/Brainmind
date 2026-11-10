@@ -4,7 +4,21 @@
 
 [下载成品 BRZ](nist-ai-rmf.brz) · [逐项验收报告](verification.json)。该成品已经在 TheBrain 14.0.102.0 完成独立导入、关闭重开和原生再导出；38 份笔记字节、50 条关系及 7 个背景色均保留。成品 SHA-256：`0af7b502f6fa9cf6fd169a0b65ae18212e6d76433124466eafa6396f7b2678e5`。首次打开请选择独立测试脑图，勿合并到日常脑图；下文生成步骤用于重建或调整内容。
 
-## 准备与生成
+## 无需底稿直接生成
+
+从本仓库或[完整独立 skill 包](../../releases/brz-edit.zip)的运行代码，可以直接将本例 `content.json` 生成为新的 BRZ，无须现成归档、Git 或正在运行的 TheBrain：
+
+```sh
+python -X utf8 -m brain_toolkit create --content examples/nist-ai-rmf/content.json
+python -X utf8 -m brain_toolkit create --content examples/nist-ai-rmf/content.json --output work/nist-new.brz
+python -X utf8 -m brain_toolkit validate work/nist-new.brz
+```
+
+在命令前准备输出目录 `work/`。独立包将命令前缀替换为 `python -X utf8 "技能目录/scripts/brz.py"`，内容 JSON 使用实际文件路径。每次新建分配全新的脑图身份；首次导入选择“创建新脑图”，不用提前建立空白脑图。[无底稿生成的成品](nist-from-content.brz)与[原生往返核对报告](create-verification.json)展示本入口的结果：38 个节点、50 条关系、38 份来源笔记。此内容文件未指定背景色，采用应用默认样式；需要颜色时给相应节点增加 `background_color` 字段。
+
+下面保留早期“已有归档生成编辑计划”的复现方式。它用于保留已有身份的编辑示例；全新作品使用上面的 `create` 入口。
+
+## 已有归档的计划生成方式
 
 需要 Python 3.10+ 和本仓库，无额外 Python 依赖。先在 TheBrain 原生创建一个可丢弃的空白脑图，导出为 `work/nist-empty.brz`。本脚本不能从零制造原生 BRZ，也不修改运行中的数据库。保留原导出文件，并按根目录 `skills/brz-edit/SKILL.md` 和 `docs/FORMAT.md` 操作。
 

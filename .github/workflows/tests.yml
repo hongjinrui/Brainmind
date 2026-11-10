@@ -29,3 +29,5 @@ jobs:
         run: python -X utf8 -m unittest discover -s tests -v
       - name: Check CLI entry point
         run: python -X utf8 -m brain_toolkit --help
+      - name: Check distributed skill matches source
+        run: python -X utf8 tools/package_skill.py --check releases/brz-edit.zip

@@ -1,8 +1,8 @@
 # 通过代码维护 TheBrain 脑图
 
-本仓库现在包含一套 **实验性的 BRZ 离线编辑工具**。无需找回原软件源代码，即可读取现有导出包、按 UUID 修改节点及关系，输出新的 BRZ 副本。工具只用 Python 标准库，要求 Python 3.10 或更新版本。
+把 PDF 或文字资料整理成可供 TheBrain 14 打开的新脑图，或维护已有 BRZ 副本。**新建作品不需要已有脑图、空白底稿或 Git checkout**：完整 skill 包内含 Python 编辑器，AI 负责阅读资料、组织节点与来源笔记，工具负责生成和校验 BRZ。生成只需 Python 3.10+ 标准库；TheBrain 用于打开成品和应用验收。格式支持仍属实验范围。
 
-已验证五份现有 BRZ 的文件结构，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查。**11 项操作演示及 38 节点的 NIST AI RMF 中文成品脑图，已在 Windows 的 TheBrain 14.0.102.0 中完成导入、关闭重开和再导出**，具体界面检查与数据核对范围见[验证记录](docs/VALIDATION.md)。这些结果不代表所有 BRZ 或软件版本都兼容。首次使用仍应导入独立测试脑图；原始四卷和其中的原始 BRZ 均保持不变。
+已验证五份现有 BRZ 的文件结构，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查。**11 项编辑演示及完全无底稿创建的 38 节点 NIST AI RMF 脑图，已在 Windows 的 TheBrain 14.0.102.0 中完成导入、关闭重开和再导出**。全量核对节点、关系、来源笔记和脑图名称/主页设置均保留，再导出的文件也能继续离线编辑；具体界面抽查与数据核对范围见[验证记录](docs/VALIDATION.md)。这些结果不代表所有 BRZ 或软件版本都兼容。首次使用仍应导入独立测试脑图；原始四卷和其中的原始 BRZ 均保持不变。
 
 ## 从哪里开始
 
@@ -16,6 +16,48 @@
 - [PDF 到成品脑图示例](examples/nist-ai-rmf/README.md)：NIST AI RMF 1.0 中文知识图，提供 38 节点的来源笔记及可复现计划生成器。
 
 这是对现有文件格式的研究与工具实现，没有恢复 TheBrain 的软件源码，也没有重建其桌面应用。
+
+## 给其他人直接使用
+
+下载 [完整 brz-edit.zip](https://github.com/hongjinrui/Brainmind/raw/refs/heads/main/releases/brz-edit.zip)，解压后得到 `brz-edit/`。将整个目录安装到所用 AI 助手的 skill 目录，或让能读本地文件、执行 Python 的助手按其中 `SKILL.md` 操作。包内已有运行代码和参考文档；只复制 `SKILL.md` 会缺少编辑器。
+
+给助手提供 PDF 或文字资料，然后提出：
+
+> 用 brz-edit 将这些资料整理成 TheBrain 脑图。为主题建立父子和跨主题关系，笔记保留来源页码与链接，交付可打开的 BRZ。
+
+助手先阅读资料并生成内容 JSON，再调用 `create`。CLI 不直接理解 PDF；PDF 阅读能力由助手及其可用阅读工具提供。完整包无需 pip 依赖、Git、任何原始分卷或预先导出的 BRZ，生成时也不用启动 TheBrain。
+
+可先使用解压目录中的最小示例试跑（将 `brz-edit` 替换为实际安装路径，Windows 可把 `python` 换成 `py -3`）：
+
+```sh
+python -X utf8 brz-edit/scripts/brz.py create --content brz-edit/references/example.content.json
+python -X utf8 brz-edit/scripts/brz.py create --content brz-edit/references/example.content.json --output work/reading.brz
+python -X utf8 brz-edit/scripts/brz.py validate work/reading.brz
+```
+
+第一条只预演；第二条生成 3 个中文节点、2 条父子关系、1 条跳转及来源笔记。输出路径必须未存在。把生成的 `.brz` 导入 TheBrain，选择创建新脑图；后续维护用 `apply`，保留已有节点身份。
+
+## 从内容 JSON 新建
+
+仓库使用 `python -X utf8 -m brain_toolkit`；独立包用 `python -X utf8 安装目录/scripts/brz.py`。`create --content` 接收如下内容，无 `source_sha256`，不读取任何底稿：
+
+```json
+{
+  "nodes": [
+    {"key": "root", "name": "资料主题", "note": "# 资料主题\n\n来源：用户提供的资料。"},
+    {"key": "idea", "parent_key": "root", "name": "关键观点", "note": "在这里写概括、依据和页码。"}
+  ]
+}
+```
+
+`key` 用于内容中的关系引用；工具为新脑图、节点、连线和笔记分配新 UUID。节点还可包含 `label`、`background_color`，`jumps` 表示跨主题联系，`edges` 可表达多个父节点。参数与限制见 [skill](skills/brz-edit/SKILL.md) 和[格式说明](docs/FORMAT.md#无底稿创建)。来源、页码及关系解释应写入 `note`；仅放在 JSON 辅助元数据中不会自动显示在应用里。
+
+```sh
+python -X utf8 -m brain_toolkit create --content work/content.json
+python -X utf8 -m brain_toolkit create --content work/content.json --output work/new-brain.brz
+python -X utf8 -m brain_toolkit inspect work/new-brain.brz --list
+python -X utf8 -m brain_toolkit validate work/new-brain.brz
+```
 
 ## 恢复原始材料
 
@@ -71,9 +113,9 @@ python3 -X utf8 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2
 
 [NIST AI RMF 示例](examples/nist-ai-rmf/README.md) 将 [2023 年官方 PDF](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf) 重组为“AI 风险管理：从框架到行动”：7 个主分支、38 个节点、37 条父子关系、13 条跨主题跳转和 38 份中文来源笔记。摘要与原创实践提示分开标明；笔记附页码与 PDF 链接，未嵌入 PDF 文件。
 
-从 TheBrain 原生导出的空白测试脑图开始，运行 [build_plan.py](examples/nist-ai-rmf/build_plan.py) 生成绑定该输入摘要的 133 操作计划，再用同一 CLI 预演、写出和验收。可修改 [content.json](examples/nist-ai-rmf/content.json) 中的知识结构后生成新计划；生成器会明确替换选定根节点的名称与整份笔记，其他已有节点保持不变。完整命令和输入限制见示例说明。
+现在可直接用 `create --content examples/nist-ai-rmf/content.json --output work/nist.brz` 从这份知识结构生成新脑图，此入口已完成独立导入、重开和再导出。此前基于原生空白导出的 [build_plan.py](examples/nist-ai-rmf/build_plan.py) 仍可用于把内容写入明确选择的现有根节点；它生成绑定源摘要的 133 操作计划，会替换该根的名称和整份笔记并保留其他已有节点。两条流程的具体应用结果分开记录在验证文档中。
 
-本次原生再导出后，全量核对名称、关系、笔记、来源链接和颜色均保留；再基于该文件修改一个节点的 Label 和笔记也通过离线校验。第二次编辑尚未重新导入桌面应用，详细变更范围见[成品验收记录](docs/VALIDATION.md#公开-pdf-成品nist-ai-rmf-10)。
+无底稿作品原生再导出后，全量核对名称、关系、笔记、来源链接及脑图名称/主页设置均保留；再基于该文件修改一个节点的 Label 也通过离线校验。该内容 JSON 没有显式颜色，黄色背景已由独立小样例验证。第二次编辑尚未重新导入桌面应用，详细变更范围见[新建验收记录](docs/VALIDATION.md#无底稿创建与独立-skill-包)。
 
 ## 支持的操作
 
@@ -108,7 +150,7 @@ python3 -X utf8 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2
 
 > 按本仓库 `skills/brz-edit/SKILL.md`，读取这份 BRZ，把这些资料整理成父子节点并补充笔记，保留已有节点身份，交付新的 BRZ 和修改报告。
 
-仓库的 `AGENTS.md` 也会引导后续代码助手读取这个 skill。也可将 skill 安装到助手的技能目录，但仍需保留可定位的 Brainmind checkout；仅复制 `SKILL.md` 不会安装 Python 编辑器。解释器选择与路径规则见 skill 的“定位与启动”。
+仓库的 `AGENTS.md` 也会引导后续代码助手读取这个 skill。安装完整 ZIP 后不需要保留 checkout；旧的单文件安装可补装完整包或继续定位已有 checkout。解释器选择与路径规则见 skill 的“定位与启动”。
 
 ## 开发检查
 
@@ -120,4 +162,14 @@ python3 -X utf8 -m unittest discover -s tests -v
 
 测试重点是引用一致性、事务回退、原始字节保留和文件写入边界，还覆盖 Windows 文件同步、旧代码页下中文/emoji 报告、原生访问记录复合键、保守保留导出壁纸，以及笔记文件被其他附件共用时拒绝覆盖。
 
-第一批稳定性修复提交 `e7f3b34489a14d41601d34d26a6c8916cc1de6da` 的 [6 组 CI 检查](https://github.com/hongjinrui/Brainmind/actions/runs/42829276774) 全部通过。加入成品计划生成器的 3 项回归后，本地 Windows 测试为 78 项通过；完整记录与具体版本见 [VALIDATION.md](docs/VALIDATION.md)。后续提交应查看自身的 CI 结果。
+第一批稳定性修复提交 `e7f3b34489a14d41601d34d26a6c8916cc1de6da` 的 [6 组 CI 检查](https://github.com/hongjinrui/Brainmind/actions/runs/42829276774) 全部通过。此后加入成品计划生成器、无底稿创建和独立包回归，当前本地 Windows 测试为 91 项通过；完整记录与具体版本见 [VALIDATION.md](docs/VALIDATION.md)。历史 CI 成功只覆盖当时的提交，后续提交应查看自身结果。
+
+维护者修改代码、skill 或随包文档后，需要重建独立包。先使用尚未存在的临时输出路径，成功生成后明确替换发布文件，再只读检查一致性：
+
+```sh
+python -X utf8 tools/package_skill.py --output work/brz-edit.next.zip
+python -c "from pathlib import Path; import os; Path('releases').mkdir(exist_ok=True); os.replace('work/brz-edit.next.zip', 'releases/brz-edit.zip')"
+python -X utf8 tools/package_skill.py --check releases/brz-edit.zip
+```
+
+打包器将 skill、核心 Python 代码、参考文档和最小内容示例放入顶层 `brz-edit/`，附逐文件 SHA-256 清单；代码不在源码 skill 中重复维护。文件顺序、时间戳、权限和换行固定，使用无压缩 ZIP，相同源码产生相同字节。`--output` 拒绝覆盖已有文件；`--check` 不写文件，发布包与当前源码不一致或缺失时退出失败。跨平台 CI 在测试后运行此检查，防止核心已更新而下载包仍旧。测试还会把包解压到独立目录，在隔离 Python 进程中完成无底稿创建和继续编辑。

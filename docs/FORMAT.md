@@ -2,7 +2,21 @@
 
 本文记录仓库样本和随包 TheBrain 14 文档中可核对的事实。这里的 coding 指通过代码维护脑图的能力，不要求存在名为 `coding-base` 的文件。
 
-**当前状态：实验性的 BRZ 离线编辑。11 项操作演示已在 TheBrain 14.0.102.0 中通过导入、重开和再导出的语义核对；其他输入仍需单独验收。** 结构校验本身不能证明原应用兼容。没有恢复软件源代码，也没有确认用户电脑上所谓 `.dll` 脑图存储的格式。
+**当前状态：实验性的 BRZ 创建和离线编辑。11 项编辑演示及无底稿创建的 38 节点作品已在 TheBrain 14.0.102.0 中通过导入、重开和再导出的语义核对；其他输入仍需单独验收。** 结构校验本身不能证明原应用兼容。没有恢复软件源代码，也没有确认用户电脑上所谓 `.dll` 脑图存储的格式。
+
+## 无底稿创建
+
+`create --content content.json [--output new.brz]` 直接从内容构建 BRZ v5，不读取已有 BRZ，也不需要 TheBrain 正在运行。省略 `--output` 只在内存中预演；写出复用已有发布前重读验证和禁止覆盖逻辑。输入内容保留不变，报告绑定 `content_sha256`；不存在输入 BRZ，因此不要求 `source_sha256`。以后编辑生成文件时，仍需用实际文件 SHA-256 绑定 `apply` 计划。
+
+内容 JSON 的 `nodes` 为 1–10000 个对象，每个节点具有唯一非空字符串 `key` 和非空 `name`，可选 `note`（Markdown 字符串）、`label`、有符号 32 位 `background_color`。`parent_key` 省略或为 `null` 时不声明父关系，否则引用父节点 key；也可用 `edges` 添加其他父关系。`jumps` 中元素为 `a`、`b`，`edges` 中元素另需 `relation` 为 `parent` 或 `jump`；二者都可带说明性 `reason`。端点必须存在，父子允许多父但拒绝环；重复关系及自连接拒绝。所有新节点均为普通 `Kind=1`；类型和标签可在生成后通过受支持的编辑操作设置。
+
+可选 `schema_version` 必须为整数 `1`。顶层 `title` 用作脑图名称，省略时取第一个根节点名称。顶层的 `subtitle`、`created_at`、`author`、`source`、`design`，节点的 `category`、`source_pages`、`source_pdf_page` 以及关系 `reason` 是兼容示例的辅助信息，不自动写入原应用字段；需要展示的来源和说明应包含在 `note`。未知键拒绝，避免拼错字段后静默丢失内容。PDF 提取与知识组织由调用者完成，CLI 不直接解析 PDF。新建仍受合计 10000 项编辑操作上限约束，每个节点、一次样式设置、每条关系和每份笔记各计一项。
+
+创建器分配新的 UUID v4 作为脑图、节点、连线和附件身份，使用现有创建规则写节点、关系及笔记。归档提供 v5 元数据和已知表；访问、用户、同步、历史等表为空，不复制其他人的账号或历史记录。`settings` 只写脑图名称及首个根节点作为主页的两项最小设置。返回的 `node_ids` 是内容 key 到 UUID 的映射，`root_ids` 给出没有父关系的节点。预演与实际执行重新生成 UUID 和时间戳，二进制摘要不同是预期行为。
+
+最小设置的依据来自官方程序集静态检查及六份原生导出：`BrainSettingKey` 的名称为 19、主页节点为 20，设置 ID 为 `uuid5(BrainId, str(枚举整数))`。`TheBrainCore` MethodDef 1819 将枚举转成十进制字符串并调用 `TheBrain.Sys` MethodDef 76；后者按 UTF-8、SHA-1、namespace GUID 的 RFC 字节序及版本/variant 位生成 UUID v5。该计算与五份原样本及原生空白导出的 19/20 两项 ID 均吻合，因此新建时根据新 BrainId 计算设置 ID。原生试错还发现：设置全空的归档虽可导入，却在打开时出现 `textToFormat` 为空错误；最低名称/主页设置不可省略。此规则不改变已有实体的 UUID，也不复制底稿设置。
+
+新建入口已对修正后的 3 节点小样例和 38 节点 NIST 作品单独做原应用验证，范围见 [VALIDATION.md](VALIDATION.md#无底稿创建与独立-skill-包)。每次 `create` 使用新脑图身份，首次导入可选择创建新脑图；继续维护同一作品应使用 `apply`。最小输入见 [example.content.json](../skills/brz-edit/references/example.content.json)。
 
 ## 证据范围
 

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .archive import Archive, ArchiveError, _json
 from .diff import compare_archives
+from .create import create_archive
 
 
 def emit(value):
@@ -55,6 +56,9 @@ def parser() -> argparse.ArgumentParser:
     apply.add_argument("source", type=Path)
     apply.add_argument("--plan", type=Path, required=True)
     apply.add_argument("--output", type=Path, help="新的 BRZ 路径，禁止覆盖已有文件")
+    create = commands.add_parser("create", help="仅根据内容 JSON 创建全新 BRZ；不需要已有脑图")
+    create.add_argument("--content", type=Path, required=True, help="UTF-8 JSON：nodes、parent_key、jumps 或 edges")
+    create.add_argument("--output", type=Path, help="新的 BRZ 路径；省略时仅预演，禁止覆盖")
     return cli
 
 
@@ -67,6 +71,21 @@ def main(argv=None) -> int:
             stream.reconfigure(encoding="utf-8")
     args = parser().parse_args(argv)
     try:
+        if args.command == "create":
+            if args.content.stat().st_size > Archive.MAX_MEMBER_BYTES:
+                raise ArchiveError("Content JSON exceeds size limit")
+            content_bytes = args.content.read_bytes()
+            archive, manifest = create_archive(_json(content_bytes))
+            result = {"mode": "write" if args.output else "dry-run", "creation": "from-content",
+                      "content_sha256": hashlib.sha256(content_bytes).hexdigest(),
+                      "summary": archive.summary(), "validation": archive.validate(), **manifest}
+            if args.output:
+                output = archive.write(args.output)
+                result["output"] = str(args.output)
+                result["output_sha256"] = hashlib.sha256(output.read_bytes()).hexdigest()
+                result["validation"] = Archive(output).validate()
+            emit(result)
+            return 0
         archive = Archive(args.source)
         if args.command == "compare":
             target = Archive(args.target)
