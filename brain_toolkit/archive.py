@@ -806,7 +806,8 @@ class Archive:
                         destination.writestr(copy.copy(self._infos[name]), data)
                     else:
                         destination.writestr(name, data)
-            with open(temporary, "rb") as stream:
+            # Windows fsync/_commit requires a writable file descriptor.
+            with open(temporary, "r+b") as stream:
                 os.fsync(stream.fileno())
             # Validate the actual serialized bytes before publishing the file.
             # A successful in-memory check alone cannot detect serialization

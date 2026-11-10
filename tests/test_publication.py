@@ -1,5 +1,6 @@
 """Publishing a BRZ requires a valid read-back, not just valid memory state."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -22,6 +23,32 @@ class PublicationTests(unittest.TestCase):
             for table in ("thoughts", "links", "attachments"):
                 output.writestr(table + ".json", b"\xef\xbb\xbf")
         self.archive = Archive(self.source)
+
+    def test_roundtrip_when_fsync_requires_a_writable_descriptor(self):
+        real_fsync = os.fsync
+
+        def writable_fsync(descriptor):
+            # Enforce Windows' writable-descriptor requirement on POSIX too.
+            # An empty write checks access without changing the archive bytes.
+            os.write(descriptor, b"")
+            real_fsync(descriptor)
+
+        with self.source.open("rb") as stream:
+            with self.assertRaises(OSError):
+                writable_fsync(stream.fileno())
+
+        original = self.source.read_bytes()
+        target = self.root / "output.brz"
+        with patch("brain_toolkit.archive.os.fsync", side_effect=writable_fsync):
+            self.archive.write(target)
+
+        self.assertEqual(original, self.source.read_bytes())
+        self.assertEqual([], Archive(target).validate()["errors"])
+        with zipfile.ZipFile(self.source) as before, zipfile.ZipFile(target) as after:
+            self.assertEqual(before.namelist(), after.namelist())
+            for name in before.namelist():
+                self.assertEqual(before.read(name), after.read(name))
+        self.assertEqual([], list(self.root.glob(".brz-*.tmp")))
 
     def test_invalid_serialized_json_is_never_published(self):
         members = self.archive._render_members()
