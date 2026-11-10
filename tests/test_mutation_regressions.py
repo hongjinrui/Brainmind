@@ -135,6 +135,41 @@ class MutationRegressionTests(unittest.TestCase):
         self.apply(a, {"op": "set_note", "id": CHILD, "text": "new Markdown"})
         self.assertEqual("False", a._find("thoughts", CHILD)["ThoughtIconInfo"].split(":")[3])
 
+    def test_ambiguous_markdown_payload_is_not_overwritten_and_plan_rolls_back(self):
+        a = Archive(self.fixture.source)
+        self.apply(a, {"op": "set_note", "id": CHILD, "text": "original"})
+        original = next(row for row in a.rows("attachments") if row.get("Location") == "Notes.md")
+        # A separate ordinary attachment names the same embedded file.
+        a._table("attachments").add({**original, "Id": NEW, "NoteType": 0, "Name": "keep this file"})
+        before = a._render_members()
+        with self.assertRaisesRegex(ArchiveError, "shared by another attachment"):
+            self.apply(a, {"op": "update_thought", "id": CHILD, "set": {"Name": "rollback"}},
+                       {"op": "set_note", "id": CHILD, "text": "replacement"})
+        self.assertEqual(before, a._render_members())
+
+    def test_unrecognized_existing_markdown_metadata_is_not_guessed(self):
+        for field, value in (("IsIcon", True), ("Name", "Custom note name")):
+            with self.subTest(field=field):
+                a = Archive(self.fixture.source)
+                self.apply(a, {"op": "set_note", "id": CHILD, "text": "original"})
+                note = next(row for row in a._table("attachments").records() if row.get("Location") == "Notes.md")
+                note[field] = value
+                before = a._render_members()
+                with self.assertRaisesRegex(ArchiveError, "Unsupported Markdown note metadata"):
+                    self.apply(a, {"op": "set_note", "id": CHILD, "text": "replacement"})
+                self.assertEqual(before, a._render_members())
+
+    def test_new_note_cannot_take_a_missing_payload_reserved_by_another_attachment(self):
+        a = Archive(self.fixture.source)
+        a._table("attachments").add(record(
+            NEW, SourceId=CHILD, SourceType=2, Type=1, NoteType=0,
+            Name="separate attachment", Location="Notes.md", DataLength=10,
+        ))
+        before = a._render_members()
+        with self.assertRaisesRegex(ArchiveError, "shared by another attachment"):
+            self.apply(a, {"op": "set_note", "id": CHILD, "text": "unexpected payload"})
+        self.assertEqual(before, a._render_members())
+
     def test_missing_or_unrecognized_note_cache_rejects_transaction(self):
         for cache in (None, "unknown", "4:C:\\Notes:2:False:False:0:"):
             with self.subTest(cache=cache):

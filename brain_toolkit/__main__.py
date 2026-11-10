@@ -59,6 +59,12 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
+    # JSON reports are UTF-8 even under a Windows legacy console encoding or
+    # when redirected to a pipe. Otherwise a successful write can be followed
+    # by UnicodeEncodeError while reporting a Chinese/emoji thought or path.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     args = parser().parse_args(argv)
     try:
         archive = Archive(args.source)

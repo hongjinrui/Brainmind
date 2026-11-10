@@ -79,6 +79,22 @@ def _uuid(value, label="ID"):
     return value
 
 
+def _record_identity(table, row):
+    """Return an exact record key, including native access rows without Id.
+
+    TheBrain 14 emits brain access entries keyed by BrainId and AccessorId.
+    AccessType is a mutable value, not part of that identity. The prefix keeps
+    this composite key distinct from ordinary UUID entity IDs in reports.
+    """
+    if table == "access.json" and "Id" not in row:
+        brain = _uuid(row.get("BrainId"), "access BrainId")
+        accessor = _uuid(row.get("AccessorId"), "access AccessorId")
+        if type(row.get("AccessType")) is not int:
+            raise ArchiveError("access AccessType must be an integer")
+        return f"access:{brain}:{accessor}"
+    return _uuid(row.get("Id"))
+
+
 def _safe_name(name):
     if not isinstance(name, str):
         raise ArchiveError("Archive paths must be strings")
@@ -291,9 +307,8 @@ class Archive:
         for name, table in self._tables.items():
             ids = {}
             for number, row in enumerate(table.records(), 1):
-                object_id = row.get("Id")
                 try:
-                    _uuid(object_id)
+                    object_id = _record_identity(name, row)
                 except ArchiveError as exc:
                     errors.append(f"{name} row {number}: {exc}")
                     continue
@@ -362,8 +377,34 @@ class Archive:
             if not isinstance(source_id, str):
                 errors.append(f"{label}: SourceId must be a UUID string")
                 return
+            try:
+                _uuid(source_id, "SourceId")
+            except ArchiveError as exc:
+                errors.append(f"{label}: {exc}")
+                return
             if source_type == 1 and source_id != brain_id:
-                errors.append(f"{label}: missing source brain")
+                # A native import/re-export can retain an old wallpaper owner
+                # directory after the BrainId changes. Preserve this observed
+                # opaque attachment, never relabel it or permit other dangling
+                # owners. Its embedded bytes and metadata must agree exactly.
+                wallpaper = False
+                if (table == "attachments" and type(row.get("Type")) is int
+                        and row["Type"] == 1 and row.get("IsWallpaper") is True
+                        and row.get("IsBrainAttachment") is True
+                        and row.get("IsIcon") is False and row.get("IsBrainIcon") is False
+                        and type(row.get("NoteType")) is int and row["NoteType"] == 0
+                        and type(row.get("DataLength")) is int):
+                    try:
+                        path = self._attachment_path(row)
+                        wallpaper = (path in self._members
+                                     and row["DataLength"] == len(self._members[path]))
+                    except ArchiveError:
+                        pass  # The attachment-path check below reports details.
+                if wallpaper:
+                    warnings.append(f"{label}: wallpaper retains a different source brain {source_id}; "
+                                    "embedded bytes preserved without ownership changes")
+                else:
+                    errors.append(f"{label}: missing source brain")
             if source_type == 2 and source_id not in thoughts:
                 errors.append(f"{label}: missing source thought")
             if source_type == 3 and source_id not in links:
@@ -687,10 +728,18 @@ class Archive:
             matches = [item for item in self._table("attachments").records() if item.get("SourceId") == row["Id"] and item.get("SourceType") == 2 and item.get("Location") == "Notes.md" and item.get("Type") == 1 and item.get("NoteType") == 4]
             if len(matches) > 1:
                 raise ArchiveError("Multiple Markdown note attachments for this thought")
+            destination = f"{row['Id']}/Notes.md"
+            existing_note = matches[0] if matches else None
+            if any(item is not existing_note and self._attachment_path(item) == destination
+                   for item in self._table("attachments").records()):
+                raise ArchiveError("Markdown note file is shared by another attachment; refusing to overwrite")
             if matches:
                 attachment = matches[0]
+                if (attachment.get("Name") != "Notes.md"
+                        or self._attachment_path(attachment) != destination):
+                    raise ArchiveError("Unsupported Markdown note metadata; refusing to guess its file or display state")
             else:
-                if f"{row['Id']}/Notes.md" in self._members:
+                if destination in self._members:
                     raise ArchiveError("Unregistered Notes.md exists; refusing to overwrite")
                 attachment = {"SourceId": row["Id"], "Name": "Notes.md", "Position": 0.0,
                               "Type": 1, "Location": "Notes.md", "IsIcon": False, "SourceType": 2,
@@ -699,7 +748,7 @@ class Archive:
                 self._table("attachments").add(attachment)
             now = _now()
             attachment.update(DataLength=len(payload), ModificationDateTime=now, FileModificationDateTime=now)
-            self._members[f"{row['Id']}/Notes.md"] = payload
+            self._members[destination] = payload
             self.meta.setdefault("AttachmentFileStates", {})[attachment["Id"]] = 1
             row["ModificationDateTime"] = now
             self._refresh_note_cache(row, cache_parts)

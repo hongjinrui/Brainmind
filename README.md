@@ -2,7 +2,7 @@
 
 本仓库现在包含一套 **实验性的 BRZ 离线编辑工具**。无需找回原软件源代码，即可读取现有导出包、按 UUID 修改节点及关系，输出新的 BRZ 副本。工具只用 Python 标准库，要求 Python 3.10 或更新版本。
 
-已验证五份现有 BRZ 的文件结构、编辑后的内部一致性，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查；**尚未验证完整软件导入、重新打开和再导出**。随包官方手册明确警告手工修改归档可能破坏文件，因此首次使用应在独立测试脑图中导入副本。原始四卷和其中的原始 BRZ 均保持不变。
+已验证五份现有 BRZ 的文件结构、编辑后的内部一致性，并用官方数据模型完成六份文件共 876 条记录的 JSON 往返检查。**11 项操作演示已在 Windows 的 TheBrain 14.0.102.0 中完成导入、关闭重开和再导出，修改内容与原有附件保留**，具体范围见[验证记录](docs/VALIDATION.md)。这是针对该样本的结果，不代表所有 BRZ 或软件版本都兼容。首次使用仍应导入独立测试脑图；原始四卷和其中的原始 BRZ 均保持不变。
 
 ## 从哪里开始
 
@@ -30,15 +30,15 @@
 
 ## 查看与修改
 
-以下命令在仓库根目录执行；Windows 可将 `python3` 换为 `py -3`。
+以下命令在仓库根目录执行；Windows 可将 `python3` 换为已安装的 `py -3` 或 `python`，不要把 Windows Store 的命令别名当成已安装的解释器。CLI 输出 UTF-8 JSON；计划也应保存为 UTF-8。Windows PowerShell 5 的 `>` 可能生成 UTF-16 报告，可改用显式 UTF-8 文件写入。
 
 ```sh
-python3 -m brain_toolkit --help
-python3 -m brain_toolkit inspect "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --list
-python3 -m brain_toolkit validate "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz"
+python3 -X utf8 -m brain_toolkit --help
+python3 -X utf8 -m brain_toolkit inspect "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --list
+python3 -X utf8 -m brain_toolkit validate "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz"
 ```
 
-`inspect` 给出源文件 SHA-256，`--list` 给出名称与 UUID。用 `--id UUID` 查看某个节点及其连线、附件、属性，加 `--notes` 读取 Markdown/HTML 笔记原文。每份笔记默认最多显示 20000 字符，并明确标记是否截断；可用 `--note-limit` 调整。修改名称不会改变已有 UUID；同名节点需结合关系上下文判断。
+`inspect` 给出源文件 SHA-256，`--list` 给出名称与 UUID。用 `--id UUID` 查看某个节点及其连线、附件、属性，加 `--notes` 读取 Markdown/HTML 笔记原文。每份笔记默认最多显示 20000 字符，并明确标记是否截断；可用 `--note-limit` 调整。修改名称不会改变已有 UUID；同名节点需结合关系上下文判断。`inspect` 成功退出仍可能包含校验错误，编辑前必须检查 `validate` 的结果。
 
 创建 JSON 计划，绑定源文件 SHA-256，列出具体修改。下面只演示改名；摘要和 UUID 必须替换为本次输入的实际值：
 
@@ -58,10 +58,10 @@ python3 -m brain_toolkit validate "work/extracted/TheBrain14 - v2/test2 2025-03-
 先预演，再写入新路径；没有 `--output` 就只预演：
 
 ```sh
-python3 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json
-python3 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json --output work/my-demo.brz > work/my-demo.report.json
-python3 -m brain_toolkit validate work/my-demo.brz
-python3 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" work/my-demo.brz > work/my-demo.diff.json
+python3 -X utf8 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json
+python3 -X utf8 -m brain_toolkit apply "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" --plan examples/demo.plan.json --output work/my-demo.brz > work/my-demo.report.json
+python3 -X utf8 -m brain_toolkit validate work/my-demo.brz
+python3 -X utf8 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2025-03-21 (1).brz" work/my-demo.brz > work/my-demo.diff.json
 ```
 
 工具不覆盖已有输出；若需重新生成，请另取一个新文件名。计划中的新节点采用预分配 UUID v4，后续操作可引用它。未指定 UUID 的新实体会自动生成，因此同一计划重复从原件生成的二进制摘要可以不同。
@@ -89,7 +89,7 @@ python3 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2025-03-2
 - 对会在 JSON 解析时损失精度的数字明确拒绝，避免悄悄改变数据；暂不支持文本、日期、布尔属性写入。
 - 不删除节点、不合并身份、不创建未知属性定义，不写事件、固定关系或权限。
 - 仓库没有实际本地脑图存储目录，不能确定你提到的 `.dll` 数据文件格式；本工具不直接写本地数据库或同步目录。
-- `validation.errors=[]` 只表示离线检查通过。`application_import_verified` 保持 `false`，直到实际完成原应用往返测试。
+- `validation.errors=[]` 只表示离线检查通过。CLI 不操作桌面应用，报告中的 `application_import_verified` 始终为 `false`；实际应用验收须另记版本、步骤和语义核对结果。
 
 原应用导入检查步骤见 [格式分析中的验证流程](docs/FORMAT.md#分级验证及导入检查)。
 
@@ -99,12 +99,14 @@ python3 -m brain_toolkit compare "work/extracted/TheBrain14 - v2/test2 2025-03-2
 
 > 按本仓库 `skills/brz-edit/SKILL.md`，读取这份 BRZ，把这些资料整理成父子节点并补充笔记，保留已有节点身份，交付新的 BRZ 和修改报告。
 
-仓库的 `AGENTS.md` 也会引导后续代码助手读取这个 skill。工具是仓库内的可复用能力，未向你的电脑全局安装任何插件。
+仓库的 `AGENTS.md` 也会引导后续代码助手读取这个 skill。也可将 skill 安装到助手的技能目录，但仍需保留可定位的 Brainmind checkout；仅复制 `SKILL.md` 不会安装 Python 编辑器。解释器选择与路径规则见 skill 的“定位与启动”。
 
 ## 开发检查
 
 ```sh
-python3 -m unittest discover -s tests -v
+python3 -X utf8 -m unittest discover -s tests -v
 ```
 
-合成测试无需任何第三方库；恢复到上述路径的五份原始导出还会参加实样本检查。测试重点是引用一致性、事务回退、原始字节保留和文件写入边界。
+合成测试无需任何第三方库或原始分卷，适合开源贡献者直接运行。[跨平台 CI](.github/workflows/tests.yml) 在 Ubuntu 和 Windows、Python 3.10/3.13/3.14 上运行同一测试命令；CI 通过不代替 TheBrain 桌面验收。恢复到上述路径的五份原始导出还会参加可选的实样本检查，未提供这些文件时该项会明确跳过。
+
+测试重点是引用一致性、事务回退、原始字节保留和文件写入边界，还覆盖 Windows 文件同步、旧代码页下中文/emoji 报告、原生访问记录复合键、保守保留导出壁纸，以及笔记文件被其他附件共用时拒绝覆盖。

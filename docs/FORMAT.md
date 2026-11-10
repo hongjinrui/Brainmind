@@ -2,7 +2,7 @@
 
 本文记录仓库样本和随包 TheBrain 14 文档中可核对的事实。这里的 coding 指通过代码维护脑图的能力，不要求存在名为 `coding-base` 的文件。
 
-**当前状态：实验性的 BRZ 离线编辑。结构校验通过，不等于已被原应用成功导入。** 没有恢复软件源代码，也没有确认用户电脑上所谓 `.dll` 脑图存储的格式。
+**当前状态：实验性的 BRZ 离线编辑。11 项操作演示已在 TheBrain 14.0.102.0 中通过导入、重开和再导出的语义核对；其他输入仍需单独验收。** 结构校验本身不能证明原应用兼容。没有恢复软件源代码，也没有确认用户电脑上所谓 `.dll` 脑图存储的格式。
 
 ## 证据范围
 
@@ -40,7 +40,9 @@ fielddefinitions.json                  fieldinstances.json
 
 样本通常带 UTF-8 BOM，记录以换行分隔；空表仅有 BOM。应保留源文件的 BOM、换行风格和未修改记录的原始字节。不要把空表改写成 `[]` 或 `{}`。
 
-所有实体均有 `Id`、`BrainId`、`CreationDateTime`、`ModificationDateTime`；部分记录还含 `SyncUpdateDateTime`、`SyncSentId`。后两者与同步有关，现有分析不足以实现云同步协议。日志、同步点、墓碑和访问控制表保留原状，不伪造应用历史。
+普通实体使用 `Id`、`BrainId` 及创建/修改时间；部分记录还含 `SyncUpdateDateTime`、`SyncSentId`。后两者与同步有关，现有分析不足以实现云同步协议。日志、同步点、墓碑和访问控制表保留原状，不伪造应用历史。
+
+TheBrain 14.0.102.0 原生再导出的 `access.json` 出现没有 `Id` 的记录，仅有 `BrainId`、`AccessorId`、`AccessType`。这种记录按 `(BrainId, AccessorId)` 复合键校验唯一性和比较，`AccessType` 必须为整数；`BrainId` 仍须匹配归档。已有带 `Id` 的记录沿用 UUID 键。工具保留权限记录，不创建或修改权限，也不伪造 `Id` 使其满足旧校验器。
 
 ## 节点及 UUID
 
@@ -66,7 +68,7 @@ fielddefinitions.json                  fieldinstances.json
 
 样本含 UUID v4 和 v5。`AIGC` 的 163 个节点中 162 个是 v4，`5G技术` 的 40 个节点均为 v5。v4 通常用于随机生成，v5 是由 namespace 和名字计算的标准形式；**现有材料未确定该应用使用的 v5 namespace 或输入**。不得从显示名称重算已有 UUID。新实体使用不重复的 UUID v4，并保留所有已有引用。
 
-颜色可按常见 ARGB 32 位形式理解；例如“已学”的 `BackgroundColor=-16728064` 对应无符号十六进制 `FF00C000`。这是基于样本数值的解释，显示、继承和透明度效果仍待应用验证。`ForegroundColor` 没有本批样本值，工具不支持修改前景色。
+颜色可按常见 ARGB 32 位形式理解；例如“已学”的 `BackgroundColor=-16728064` 对应无符号十六进制 `FF00C000`。演示节点的 `BackgroundColor=-256` 已在 TheBrain 14.0.102.0 中显示为黄色；其他颜色、继承和透明度效果未穷尽验证。`ForegroundColor` 没有本批样本值，工具不支持修改前景色。
 
 ## 关系：一份 links 表表达多种含义
 
@@ -106,11 +108,15 @@ fielddefinitions.json                  fieldinstances.json
 
 `test2 (1)/attachments.json:4` 的“加法”笔记指向 `3ff111a6-fd5e-44eb-8e76-e58a475b8370/Notes.md`，`DataLength=100`。改笔记需同步真实 UTF-8 字节长度、附件时间戳和相关成员；新建笔记还需登记 `meta.AttachmentFileStates[附件Id]=1`。这是附件 ID，不是节点 ID。
 
+`set_note` 替换整份 Markdown。现有笔记必须 `Name=Notes.md` 且解析到 `{ThoughtId}/Notes.md`；若另一个附件也引用该成员路径，即使文件当前缺失，也拒绝写入，避免改动或制造另一附件的内容。已有未登记的 `Notes.md` 同样不覆盖。
+
 官方状态重算路径确认：在笔记附件（`Type=4` 或 `Type=1 && Name=Notes.md`）中，按 `ModificationDateTime` 倒序选择最新一份，以其 `DataLength>0` 设置 `ThoughtIconInfo` 的位置 3（从 0 开始）。`set_note` 更新这一布尔段，保留另外六段，且保留旧 HTML 笔记。位置 5 是日历事件数量，不是继承图标数量。存在更晚时间戳的旧 HTML 时，仍按实际最新附件计算；不保证刚编辑的 Markdown 会成为应用显示的笔记。缺失/无法识别的状态串或时间戳会拒绝本次写操作。完整证据见 [STATIC-EVIDENCE.md](STATIC-EVIDENCE.md#笔记标记的计算证据)。
 
 图标既涉及图片成员和附件元数据，也涉及 `ThoughtIconInfo`。工具仅复用同一 BRZ、相同 `Kind` 的已有图标模板：来源缓存串必须为 `7::0:False:False:0:`，目标必须是简单的 `1::0:False:False:0:` 或 `7::0:False:False:0:` 状态，且没有类型、标签、笔记或其他附件状态；来源需恰有一个已有的 `Type=5` PNG 图标附件。目标已有图标时不支持替换。工具不声称已实现任意图标编码。示例先为新建的类型节点复用“已学”的图标，再把普通节点分配到这个新类型；类型图标可能被普通节点继承，实际显示需在应用检查。
 
 原始样本已存在元数据偏差：`test2 (1)` 壁纸附件的 `DataLength=328177`，ZIP 中实际为 `186032` 字节。未改附件的既有差异应报告警告；不能为了“修复”无关字段而扩大编辑范围。
+
+实际导入、脑图身份变更及再导出过程中，还观察到壁纸 `SourceId` 保留不同于 `meta.BrainId` 的旧脑图目录，图片字节保持完整。校验器仅在以下条件同时满足时将这一特例作为警告保留：`SourceType=1`、`Type=1`、`NoteType=0`、`IsWallpaper=true`、`IsBrainAttachment=true`、`IsIcon=false`、`IsBrainIcon=false`，且引用的内嵌成员存在、整数 `DataLength` 与实际字节数一致。工具不重写归属或移动文件；其他缺失脑图来源、缺失成员或长度不符仍拒绝。此规则只容纳已观察的导出布局，不实现通用附件归属迁移。
 
 ## 属性
 
@@ -136,7 +142,7 @@ JSON 数字若在 Python 解析后会失去原十进制精度，也会拒绝读�
 
 本仓库没有用户实际脑图存储目录，因此无法比较 BRZ 与所谓 `.dll` 数据文件，不能判断那些文件是数据库、程序库还是其他格式，更不能直接写入。
 
-官方安装包含 `Microsoft.Data.Sqlite.dll`、`TheBrain.Data.Sqlite.dll`、`e_sqlite3.dll` 等 SQLite 相关库，说明应用含 SQLite 访问组件；它们不是用户脑图数据库样本，也不足以确定本地数据库表结构。官方载荷目标为 `net6.0` / `Microsoft.WindowsDesktop.App 6.0`；当前 Linux 环境未完成原应用导入测试。
+官方安装包含 `Microsoft.Data.Sqlite.dll`、`TheBrain.Data.Sqlite.dll`、`e_sqlite3.dll` 等 SQLite 相关库，说明应用含 SQLite 访问组件；它们不是用户脑图数据库样本，也不足以确定本地数据库表结构。官方载荷目标为 `net6.0` / `Microsoft.WindowsDesktop.App 6.0`。Windows 原应用验收的具体样本和结果见 [VALIDATION.md](VALIDATION.md)。
 
 不要操作运行中的脑图、数据库、同步目录、授权或激活文件。离线编辑不需要执行压缩包中的授权工具。
 

@@ -3,7 +3,10 @@ import contextlib
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -77,6 +80,25 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(1, code)
                 self.assertIn("error", result)
                 self.assertFalse(target.exists())
+
+    def test_real_cli_emits_utf8_after_write_under_legacy_stdio_encoding(self):
+        target = self.root / "中文脑图🧠.brz"
+        environment = {**os.environ, "PYTHONIOENCODING": "ascii", "PYTHONUTF8": "0"}
+        command = [sys.executable, "-m", "brain_toolkit"]
+        written = subprocess.run(command + ["apply", str(self.source), "--plan", str(self.plan),
+                                           "--output", str(target)],
+                                 env=environment, capture_output=True, check=False,
+                                 cwd=Path(__file__).resolve().parents[1])
+        self.assertEqual(0, written.returncode, written.stderr)
+        report = json.loads(written.stdout.decode("utf-8"))
+        self.assertEqual(str(target), report["output"])
+        inspected = subprocess.run(command + ["inspect", str(target), "--id", self.node, "--notes"],
+                                   env=environment, capture_output=True, check=False,
+                                   cwd=Path(__file__).resolve().parents[1])
+        self.assertEqual(0, inspected.returncode, inspected.stderr)
+        result = json.loads(inspected.stdout.decode("utf-8"))
+        self.assertEqual("新名称", result["node"]["thought"]["Name"])
+        self.assertEqual("中文笔记", result["node"]["notes"][0]["text"])
 
 
 if __name__ == "__main__":

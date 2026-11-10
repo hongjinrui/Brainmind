@@ -8,7 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from .archive import Archive, ArchiveError
+from .archive import Archive, ArchiveError, _record_identity
 
 
 def _same_json(left, right):
@@ -29,8 +29,8 @@ def _fingerprint(data):
 def _indexed(archive, table):
     result = {}
     for row in archive.rows(table):
-        ident = row.get("Id")
-        if not isinstance(ident, str) or ident in result:
+        ident = _record_identity(table, row)
+        if ident in result:
             raise ArchiveError(f"Cannot compare {table}: missing, invalid or duplicate Id {ident!r}")
         result[ident] = row
     return result
@@ -124,6 +124,7 @@ def compare_archives(before: Archive, after: Archive, limit: int = 100) -> dict:
         "record_counts": totals,
         "records": record_changes,
         "meta": meta,
-        "comparison_scope": "Uncompressed member bytes and known records matched by exact ID",
+        "comparison_scope": "Uncompressed member bytes and known records matched by exact ID; "
+                            "native access rows use access:BrainId:AccessorId",
         "application_import_verified": False,
     }

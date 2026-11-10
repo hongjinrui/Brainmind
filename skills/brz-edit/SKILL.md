@@ -1,23 +1,42 @@
 ---
 name: brz-edit
-description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 BRZ 导出副本，维护节点、父子/跳转、类型/标签、Markdown 笔记及受限样式。实验能力；不编辑运行中的脑图或未知本地数据库。
+description: 使用 Brainmind 的 Python 工具检查和编辑 TheBrain 14 BRZ 导出副本，将资料整理为节点、关系和 Markdown 笔记，维护类型、标签及受限样式。适用于 BRZ 脑图整理；不编辑运行中的数据库。
 ---
 
 # BRZ 脑图维护
 
-适用于用户明确要求整理、补充或修改 BRZ 脑图的任务。这里的 coding 表示通过代码维护脑图，不要求特定文件名。执行前阅读仓库 `README.md`、`docs/FORMAT.md` 和当前 `python3 -m brain_toolkit --help`；这些文件与本 skill 一起使用。
+适用于用户要求整理、补充或修改 BRZ 脑图的任务。这里的 coding 表示通过代码维护脑图，不要求特定文件名。本 skill 依赖 [Brainmind 仓库](https://github.com/hongjinrui/Brainmind) 中的编辑器和格式文档；只复制 `SKILL.md` 不会安装编辑器。
 
-当前能力已验证 BRZ 离线结构，并以官方数据模型完成现有五份样本与修订演示的 JSON 往返检查；结果见 `docs/OFFICIAL-MODEL-CHECK.md`。未经原应用导入、重新打开及再导出检查，不得声称已完成完整应用兼容性验证。
+## 定位与启动
+
+如果本 skill 位于仓库的 `skills/brz-edit/`，仓库根是该目录向上两级，必须能找到 `brain_toolkit/__main__.py`、`README.md` 和 `docs/FORMAT.md`。如果 skill 已单独安装到其他目录，使用当前任务指定的 Brainmind checkout，或查找已有 checkout；不要把 skill 安装目录当成仓库根。缺少编辑器时，将上述仓库获取到当前任务工作目录，无需恢复大型原始分卷，除非任务确实要使用其中的样本。
+
+切换到确认过的仓库根，阅读 `README.md`、`docs/FORMAT.md` 和当前 CLI 帮助。要求 Python 3.10+、仅标准库。先检查解释器；Windows 优先 `py -3`，也可使用实际可用的 `python`；不要假设 Windows 的 `python3` Store 别名已安装 Python。下文用 `python` 代表已确认的解释器命令；若选择 `py -3` 或 `python3`，替换该命令前缀。
+
+```sh
+python -X utf8 --version
+python -X utf8 -m brain_toolkit --help
+```
+
+所有相对路径以仓库根为准，路径含空格时加引号。计划保存为 UTF-8 JSON（允许 UTF-8 BOM）；捕获 CLI 报告时按 UTF-8 解码和保存。Windows PowerShell 5 的 `>` 可能产生 UTF-16 文本，需显式以 UTF-8 写报告，或用 Python 捕获子进程的 UTF-8 输出后保存。
+
+已完成的验证范围见 `docs/VALIDATION.md` 和 `docs/OFFICIAL-MODEL-CHECK.md`。已有样本通过不代表任意 BRZ 都兼容；每次交付分别说明离线验证与本次原应用导入、重开、再导出的实际结果。CLI 的 `application_import_verified=false` 表示 CLI 本身没有执行应用测试，不能通过手改该字段代替验收。
 
 ## 工作流程
 
 1. 在仓库根目录运行工具。若输入是四卷原始包，使用仓库说明恢复到 `work/`；保留四卷和原 BRZ。不要执行包内授权或激活工具。
-2. 运行 `python3 -m brain_toolkit inspect work/input.brz --list` 和 `python3 -m brain_toolkit validate work/input.brz`；使用 `inspect work/input.brz --id UUID --notes` 读取目标详情和 Markdown/HTML 笔记。笔记默认每份限制 20000 字符；若 `truncated=true`，用 `--note-limit` 增加上限或另读完整内容，不把截断文字当成全文。检查版本、节点和关系数量、UUID、类型/标签、附件、警告；读取目标及其父子、跳转、类型、标签和笔记上下文。
+2. 运行 `python -X utf8 -m brain_toolkit inspect "work/input.brz" --list` 和 `python -X utf8 -m brain_toolkit validate "work/input.brz"`；使用 `inspect "work/input.brz" --id UUID --notes` 读取目标详情和 Markdown/HTML 笔记。`inspect` 成功退出仍可能含 `validation.errors`，不能代替 `validate`。笔记默认每份限制 20000 字符；若 `truncated=true`，用 `--note-limit` 增加上限（最多 1000000）或另读完整内容。检查版本、节点和关系数量、UUID、类型/标签、附件、警告；读取目标及其父子、跳转、类型、标签和笔记上下文。
 3. 以 UUID 选择已有节点。名称可能重复，不可仅凭文字自动选中第一个。能从上下文唯一定位时继续；存在影响编辑结果的歧义时向用户澄清，同时推进独立工作。
-4. 根据用户目标创建 JSON 计划，必须含原 BRZ 的 `source_sha256`；列清具体操作、目标 UUID、新名称/笔记、关系端点、复用模板。把草稿、检查结果和中间文件置于 `work/`。用户已授权的日常可逆编辑可直接执行，无须额外确认。
-5. 运行 `python3 -m brain_toolkit apply work/input.brz --plan work/edit.plan.json` 预演；**省略 `--output` 即为 dry-run，没有 `--dry-run` 参数**。检查修改清单后，增加 `--output work/edited.brz` 执行计划写副本，再运行 `python3 -m brain_toolkit validate work/edited.brz`。输入输出必须为不同路径，且输出文件不能已经存在。
-6. 运行 `python3 -m brain_toolkit compare work/input.brz work/edited.brz > work/edit.diff.json`，核对原件 SHA-256 未变、未涉及成员及记录未变、计划操作均完成、没有悬空引用；保留变更报告和新文件摘要。比较报告默认每类至多 100 项明细，若有 `truncated=true`，使用 `--limit` 增大上限；不要把截断列表当成全部变化。若发现原样本已有警告，单列为原有问题，不随意扩展修改范围。
+4. 根据用户目标创建 JSON 计划，必须含原 BRZ 的 `source_sha256`；列清具体操作、目标 UUID、新名称/笔记、关系端点、复用模板。操作按数组顺序执行，先创建节点再引用。`set_note.text` 会替换整份 Markdown，补充笔记时先读全文再合并。把草稿、检查结果和中间文件置于 `work/`。用户已授权的日常可逆编辑可直接执行，无须额外确认。
+5. 运行 `python -X utf8 -m brain_toolkit apply "work/input.brz" --plan "work/edit.plan.json"` 预演；**省略 `--output` 即为 dry-run，没有 `--dry-run` 参数**。检查修改清单后，增加 `--output "work/edited.brz"` 执行计划写副本并保存报告，再运行 `python -X utf8 -m brain_toolkit validate "work/edited.brz"`。输入输出必须为不同路径，且输出文件不能已经存在。预演与实际写出可能有不同的自动生成 UUID 和时间戳，按计划操作与最终输出核验，不要求二进制摘要相同。
+6. 运行 `python -X utf8 -m brain_toolkit compare "work/input.brz" "work/edited.brz"` 并以 UTF-8 保存为 `work/edit.diff.json`，核对原件 SHA-256 未变、未涉及成员及记录未变、计划操作均完成、没有悬空引用；保留变更报告和新文件摘要。比较报告默认每类至多 100 项明细，若有 `truncated=true`，使用 `--limit` 增大上限；不要把截断列表当成全部变化。若发现原样本已有警告，单列为原有问题，不随意扩展修改范围。
 7. 交付编辑副本、改动说明和验证状态。如果环境能运行正常可用的原应用，按 `docs/FORMAT.md` 完成测试脑图导入；否则明确报告“离线结构通过，原应用导入未验证”，保留后续人工检查步骤。
+
+## 将 PDF 或文字资料整理成脑图
+
+先读取资料，按主题组织节点和关系，在笔记中记录来源链接与页码；区分原文结论和自己的解释。PDF 提取或摘要不由本 CLI 实现，先用环境中可用的阅读工具完成。将资料转成上述 JSON 操作，再走同一预演、写出和验收流程。
+
+工具需要一份有效的 BRZ 作为输入，不提供从零创建脑图、任意文件附件上传或删除节点操作。新作品优先使用 TheBrain 原生导出的空白测试脑图作为起点；若采用已有样本，保留其原节点和身份，并清楚区分新增内容。外部 PDF 可在 Markdown 中链接；不要把笔记中的链接误报成已嵌入的 PDF 附件。
 
 ## 操作选择
 
@@ -72,10 +91,13 @@ description: 使用本仓库 Python 工具离线检查与修改 TheBrain 14 的 
 - 不批量修正无关历史问题。原样本的附件 `DataLength` 可能已有差异，依据当前编辑范围解释警告。
 - 重复设置相同类型/标签是无变更操作。带笔记、属性、事件或成员文件的连线不能直接删除；更换类型需要丢弃旧连线样式或未知字段时也拒绝执行。遇到这类拒绝，先说明附属内容及需要保留的信息，不直接删除依赖来绕过检查。
 - 笔记编辑要求可识别的七段状态串和时间戳，只更新位置 3；位置 5 是日历事件数量。旧 HTML 若时间戳更晚，刚写入的 Markdown 不一定成为应用显示笔记，需结合报告和应用检查说明。
+- Markdown 笔记必须采用受支持的 `Name=Notes.md` 和 `{ThoughtId}/Notes.md` 路径。其他附件共用同一路径或存在未登记的笔记文件时拒绝覆盖，不删除附件登记来绕过检查。
 - 属性编码不确定、或 JSON 数字会发生精度损失时停止对应写操作；不把这些值强行转为浮点数或猜测日期/布尔编码。格式依据见 `docs/STATIC-EVIDENCE.md`。
 
 ## 原应用验证
 
 在正常可用的 TheBrain 中先创建可丢弃的测试脑图，导入新 BRZ 副本，检查本次编辑与未改附件，关闭重开，再导出并比对。随包手册 p252–253 指出导入会修改当前打开的脑图，且不能撤销；首次验证不能合并进用户的日常脑图。
+
+原应用可能重分配 UUID。此时 `compare` 的按 UUID 差异会显示大量增删，需另按本次计划核对节点、父子方向、类型/标签、Markdown 和附件字节；不能仅凭记录总数或同名节点判定成功。若再导出版本不被当前工具接受，记录完整错误与样本，不能手工删除权限记录或改写未知引用以强行通过。
 
 遇到未知版本、无效输入、缺失引用、冲突 UUID、计划摘要不匹配或超出已研究格式的需求时，停止对应写操作，报告具体原因和已完成工作。不要通过修改授权文件或猜测本地数据库来绕过阻碍。
