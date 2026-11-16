@@ -1,7 +1,40 @@
+# Generated packages, local reports, compiler arguments and logs
 /work/
+/dist/
+/publish/
+/build/*/staging/
+/build/**/*.rsp
+/build/**/*.log
 __pycache__/
 *.py[cod]
-*.egg-info/
-.venv/
-/build/
-/dist/
+*.tmp
+*.log
+*.jsonl
+*.pdb
+*.user
+.vs/
+.vscode/
+
+# Personal model configuration and credentials must never be committed
+.env
+.env.*
+model.json
+model.*.json
+*.model.json
+credentials*.json
+secrets*.json
+*.key
+*.pem
+sessions/
+settings/
+
+# TheBrain, local documents and generated brains are not project source
+*.exe
+*.msi
+*.brz
+*.brain
+*.db
+*.sqlite*
+*.pdf
+/thebrain*/
+/*.txt

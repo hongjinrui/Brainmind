@@ -1,0 +1,7 @@
+# Preserve exact bytes: the launcher checks shipped DLL/config hashes, and
+# the build manifest records source hashes. Avoid checkout line conversion.
+* -text
+*.dll binary
+*.png binary
+*.jpg binary
+*.zip binary

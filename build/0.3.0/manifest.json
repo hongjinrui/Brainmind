@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "runtime_version": "0.3.0",
+  "target_version": "14.0.102.0",
+  "runtime_file": "Brainmind.Runtime.dll",
+  "runtime_sha256": "289c68fb4c0721fd01851233e592e6a7a9b5dd9ed77b2321f9c9b98428960cc9",
+  "sources": {
+    "src/Brainmind.Runtime/AttachmentContext.cs": "e6ce075709220497bc8015e7653f211dbdf35cbb9f2467614cdd2a072f721001",
+    "src/Brainmind.Runtime/AttachmentReader.cs": "168f087fc794c723a0ab00ff0a0e564aa8854bbb9d744631cc2aac8274bd28a5",
+    "src/Brainmind.Runtime/AttachmentTypes.cs": "98e7ea38215754c483f0972acd150f5cd0bf66d44980f9786e2f77aff1d53852",
+    "src/Brainmind.Runtime/ChatPanel.cs": "322f246e35a53bbb1a3e1b12c41fbb362a068fbc658db8928e84952f962c2885",
+    "src/Brainmind.Runtime/MapBuilder.cs": "bd59ebe7d15805266ab0a4efca372168a20d7874284499daa200faa24810f29c",
+    "src/Brainmind.Runtime/MapPlan.cs": "3e0c4ac6af2859834d486985e6b41edf07f6d5c2617f324738843341b2fa953b",
+    "src/Brainmind.Runtime/ModelClient.cs": "df17a0e97c7d15fd7e915901bdf6f9d3444ce6497ac4ee45c70e27005c4e7adb",
+    "src/Brainmind.Runtime/ModelConfig.cs": "59066c3c8b931cb4931ce68c82c2d3fc843d61fd0fb305bf7dbe80b9eecd99c9",
+    "src/Brainmind.Runtime/PipeServer.cs": "b69bb092637ac3c4e470e6ec627b8c4e58fd95bb979a7355429c58d528f4a39c",
+    "src/Brainmind.Runtime/RuntimeHost.cs": "5cbdf244157b2c225c06299f4133c27c273eb0e2ab768e573d72bc4aa9378582",
+    "src/Brainmind.Runtime/StartupHook.cs": "169deb324243f31d60e5ad77af01e96896a8c482875e639ea60874c9b544da4a",
+    "src/Brainmind.Runtime/TheBrainAdapter.cs": "5a3466f346de2b22002811728d8a9888f326cd154c069014cdb59c18a806ba76"
+  },
+  "supported_build_sha256": "e2d7ca6f33396fa5919854c927d214c3fde2fb5c044514a3b76960ddfbe3e595"
+}

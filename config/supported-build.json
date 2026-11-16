@@ -1,0 +1,65 @@
+{
+  "target_version": "14.0.102.0",
+  "files": [
+    {
+      "Name": "TheBrain.exe",
+      "SHA256": "2bf730fcbd5ae6307468389b139c47b9ee342b6f7d841d288173f55f9176f7a1"
+    },
+    {
+      "Name": "TheBrain.Windows.App.dll",
+      "SHA256": "835d3dec421f7fbeb1e94e919c568492823de57da4502be6fd22ff0dd9764e9a"
+    },
+    {
+      "Name": "TheBrainDesktop.dll",
+      "SHA256": "36a0fbc50892ebedab496515e2be160fe5900c7a56b6e23506b25e5a872f04ee"
+    },
+    {
+      "Name": "TheBrain.Client.dll",
+      "SHA256": "6a4a305276a04b8ae21efb32498fc8fa67c0840c0079661913409d4a191c2dee"
+    },
+    {
+      "Name": "TheBrainCore.dll",
+      "SHA256": "70356c4e3c243b8072d839754e69d34346803dec4a3c38dca336d2fb0a50d2fa"
+    },
+    {
+      "Name": "Microsoft.Web.WebView2.Core.dll",
+      "SHA256": "af0e477405aaad87424cf3930818b4e7901a0077b13b8e0882e9b435ed6f4b4c"
+    },
+    {
+      "Name": "KezaCore.dll",
+      "SHA256": "b2b7d29436362a7634480aa813273aedbdbc16a214892e9ce65c8a1814c33e8c"
+    },
+    {
+      "Name": "Xwt.dll",
+      "SHA256": "f0e91b58b112748adb664b4d4a01e2c59dcb915c73f6ce27d40417076993fc59"
+    },
+    {
+      "Name": "UglyToad.PdfPig.Core.dll",
+      "SHA256": "bf94d9066752e24a2370e2efeb8501b45b10b11c7fe015085abd615937d0cd6a"
+    },
+    {
+      "Name": "UglyToad.PdfPig.dll",
+      "SHA256": "1321ed40c853a85c1322ec110cb7fae904d02e7c43d4d60534be632f1c6096fa"
+    },
+    {
+      "Name": "UglyToad.PdfPig.DocumentLayoutAnalysis.dll",
+      "SHA256": "0fbcc443e5aa1ad8170137ad0f4ab0e100113359ff9748b79e1fae61eb786dca"
+    },
+    {
+      "Name": "UglyToad.PdfPig.Fonts.dll",
+      "SHA256": "b18380040ca049217793c04534c7fd37a6c7627eddfee77d58f2a1d401668094"
+    },
+    {
+      "Name": "UglyToad.PdfPig.Package.dll",
+      "SHA256": "f67679ddc3d773f3389709777777bc97e4912af95794c0678d8f99b775ebc99a"
+    },
+    {
+      "Name": "UglyToad.PdfPig.Tokenization.dll",
+      "SHA256": "5ad8243c8941b839824650d3b4ce37a0eba2089ede7db87a165497cd5de1f8c7"
+    },
+    {
+      "Name": "UglyToad.PdfPig.Tokens.dll",
+      "SHA256": "fc334aab7d7c5b87da028ee58c525d819f04b116e72cc28d453c951156a32ff2"
+    }
+  ]
+}
