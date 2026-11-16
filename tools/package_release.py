@@ -16,7 +16,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.0"
+VERSION = "0.5.0"
 TARGET = "14.0.102.0"
 RUNTIME = f"build/{VERSION}/Brainmind.Runtime.dll"
 BUILD_MANIFEST = f"build/{VERSION}/manifest.json"
@@ -194,7 +194,7 @@ def write_file(path, data):
 
 
 def export_repository(inputs):
-    directory = output_directory("publish/Brainmind")
+    directory = output_directory(f"publish/Brainmind-{VERSION}")
     for path in directory.rglob("*"):
         if is_alias(path):
             raise RuntimeError("Generated repository contains an aliased path.")
@@ -262,7 +262,7 @@ def package():
         source_name: write_archive(directory / source_name, f"Brainmind-{VERSION}-source/", repository),
     }
     report = {"format": 1, "version": VERSION, "target_version": TARGET,
-              "repository": "publish/Brainmind", "repository_member_count": len(repository),
+              "repository": f"publish/Brainmind-{VERSION}", "repository_member_count": len(repository),
               "launcher_member_count": len(launcher), "privacy": privacy, "archives": archives}
     write_file(directory / "github-release-manifest.json", (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
     return {"success": True, "version": VERSION, "repository": report["repository"],

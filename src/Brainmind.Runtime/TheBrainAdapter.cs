@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Brainmind.Runtime
 {
@@ -43,6 +44,7 @@ namespace Brainmind.Runtime
         private sealed class AdapterException : Exception
         {
             public readonly string Code;
+            public Dictionary<string,object> PartialResult;
             public AdapterException(string code, string message) : base(message) { Code = code; }
         }
 
@@ -65,6 +67,253 @@ namespace Brainmind.Runtime
             value["context_token"] = binding.Snapshot["context_token"];
             EnsureSameBinding(binding);
             return value;
+        }
+
+        /// <summary>
+        /// Makes a complete, read-only plan for all live ordinary thoughts outside the active
+        /// thought's child closure. The native full-brain streams also include disconnected
+        /// branches; visible adjacency is never treated as the whole brain.
+        /// </summary>
+        public static Dictionary<string, object> GetDeletionPlan(string preserveId)
+        {
+            return GetDeletionPlan(preserveId, false);
+        }
+
+        public static Dictionary<string, object> GetDeletionPlan(string preserveId, bool keepHome)
+        {
+            Binding binding = null;
+            List<Dictionary<string, object>> diagnostics = new List<Dictionary<string, object>>();
+            SortedDictionary<string, int> diagnosticReasons = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            SortedDictionary<string, int> ignoredSemanticKinds = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            int scannedThoughts = 0, scannedLinks = 0, diagnosticTotal = 0;
+            try
+            {
+                binding = Capture();
+                RequireSession(binding);
+                Guid preserve = ParseId(preserveId, "preserve_id");
+                if (preserve != binding.ThoughtId)
+                    throw new AdapterException("validation_error", "保留子树的根必须是当前活动节点，请先激活要保留的节点。");
+                RequireNormal(ReadNativeThought(binding, preserve, false));
+                EnsureSameBinding(binding);
+                object logic = ProtectedProperty(binding.Context, "__xxxxxxx____x___xxx");
+                Guid home = ReadNativeHome(binding, logic);
+                Dictionary<Guid, Dictionary<string, object>> thoughts = new Dictionary<Guid, Dictionary<string, object>>();
+                Dictionary<Guid, int> liveKinds = new Dictionary<Guid, int>();
+                HashSet<Guid> allIds = new HashSet<Guid>(), deletedIds = new HashSet<Guid>();
+                SortedDictionary<int, int> excludedKinds = new SortedDictionary<int, int>();
+                Dictionary<Guid, List<Guid>> children = new Dictionary<Guid, List<Guid>>();
+                int excludedCount = 0;
+                using (CancellationTokenSource cancellation = new CancellationTokenSource())
+                {
+                    cancellation.CancelAfter(15000);
+                    StreamNativeEntities(logic, "__xxxx___x__x__xx_xx_xxx", binding.BrainId, cancellation, delegate(object thought)
+                    {
+                        if (++scannedThoughts > 20000)
+                            throw new AdapterException("deletion_plan_limit", "脑图实体数量超过只读删除规划上限；未返回部分计划，也未执行删除。");
+                        if (GuidValue(Property(thought, "BrainId")) != binding.BrainId)
+                            throw new AdapterException("native_error", "全图读取返回了其他脑图的节点；未生成删除计划。");
+                        Guid id = GuidValue(Property(thought, "Id"));
+                        if (id == Guid.Empty || !allIds.Add(id))
+                            throw new AdapterException("native_error", "全图读取返回了空或重复节点 UUID；未生成删除计划。");
+                        if (OptionalProperty(thought, "DeletionDateTime") != null) { deletedIds.Add(id); return; }
+                        int kind = Convert.ToInt32(Property(thought, "Kind"), CultureInfo.InvariantCulture);
+                        liveKinds.Add(id, kind);
+                        if (kind != 1)
+                        {
+                            int count;
+                            excludedKinds.TryGetValue(kind, out count);
+                            excludedKinds[kind] = count + 1;
+                            excludedCount++;
+                            return;
+                        }
+                        if (thoughts.Count >= 5000)
+                            throw new AdapterException("deletion_plan_limit", "当前脑图超过 5000 个普通节点；未返回部分计划，也未执行删除。");
+                        thoughts.Add(id, Map("id", id.ToString(), "name", StringValue(Property(thought, "Name"))));
+                    });
+                    if (!thoughts.ContainsKey(preserve))
+                        throw new AdapterException("native_error", "全图读取未包含当前保留节点；未生成删除计划。");
+                    if (keepHome && !thoughts.ContainsKey(home))
+                        throw new AdapterException("invalid_home", "要求保留的 Home 不存在、已删除或不是普通节点；未生成删除计划。");
+                    StreamNativeEntities(logic, "_xxx__xx__x__xxxxx__x", binding.BrainId, cancellation, delegate(object link)
+                    {
+                        if (++scannedLinks > 100000)
+                            throw new AdapterException("deletion_plan_limit", "脑图连线数量超过只读删除规划上限；未返回部分计划，也未执行删除。");
+                        if (GuidValue(Property(link, "BrainId")) != binding.BrainId)
+                            throw new AdapterException("native_error", "全图读取返回了其他脑图的连线；未生成删除计划。");
+                        int kind = Convert.ToInt32(Property(link, "Kind"), CultureInfo.InvariantCulture);
+                        int meaning = Convert.ToInt32(Property(link, "Meaning"), CultureInfo.InvariantCulture);
+                        int relation = Convert.ToInt32(Property(link, "Relation"), CultureInfo.InvariantCulture);
+                        Guid a = GuidValue(Property(link, "ThoughtIdA")), b = GuidValue(Property(link, "ThoughtIdB"));
+                        string ignored = DeletionLinkExclusion(kind, meaning, relation, OptionalProperty(link, "DeletionDateTime") != null);
+                        if (ignored != null)
+                        {
+                            if (kind != 1 || meaning != 1)
+                            {
+                                string semantic = "kind_" + kind.ToString(CultureInfo.InvariantCulture) + "_meaning_" + meaning.ToString(CultureInfo.InvariantCulture);
+                                int semanticCount;
+                                ignoredSemanticKinds.TryGetValue(semantic, out semanticCount);
+                                ignoredSemanticKinds[semantic] = semanticCount + 1;
+                            }
+                            diagnosticTotal++;
+                            RecordDeletionLinkDiagnostic(diagnostics, diagnosticReasons, ignored, link, a, b, kind, meaning, relation, liveKinds, deletedIds);
+                            return;
+                        }
+                        // Relation alone is insufficient: native type/tag assignments also
+                        // have parent/child relations. Only ordinary link Kind=1/Meaning=1
+                        // forms the thought hierarchy. Anomalous hierarchy endpoints are
+                        // retained as traversal bridges, so their reachable ordinary children
+                        // cannot accidentally become deletion candidates.
+                        if (!thoughts.ContainsKey(a) || !thoughts.ContainsKey(b))
+                        {
+                            diagnosticTotal++;
+                            RecordDeletionLinkDiagnostic(diagnostics, diagnosticReasons, "anomalous_structural_endpoint", link, a, b, kind, meaning, relation, liveKinds, deletedIds);
+                        }
+                        Guid parent = relation == 1 ? a : b, child = relation == 1 ? b : a;
+                        List<Guid> list;
+                        if (!children.TryGetValue(parent, out list)) children[parent] = list = new List<Guid>();
+                        list.Add(child);
+                    });
+                    if (cancellation.IsCancellationRequested)
+                        throw new AdapterException("deletion_plan_limit", "全图读取超时；未返回部分计划，也未执行删除。");
+                }
+                Dictionary<string, object> selection = SelectDeletionThoughts(thoughts, children, preserve, home, keepHome);
+                List<Dictionary<string, object>> excluded = new List<Dictionary<string, object>>();
+                foreach (KeyValuePair<int, int> kind in excludedKinds) excluded.Add(Map("kind", kind.Key, "count", kind.Value));
+                EnsureSameBinding(binding);
+                Binding current = Capture();
+                if (!String.Equals((string)binding.Snapshot["context_token"], (string)current.Snapshot["context_token"], StringComparison.Ordinal))
+                    throw new AdapterException("context_changed", "读取全图期间脑图、活动节点或笔记已变化；未返回部分计划，请核对后重新请求。");
+                selection["success"] = true;
+                selection["scope"] = "except_subtree";
+                selection["preserve_id"] = preserve.ToString();
+                selection["complete"] = true;
+                selection["excluded_thought_kinds"] = excluded;
+                selection["excluded_count"] = excludedCount;
+                selection["soft_deleted_thought_count"] = deletedIds.Count;
+                selection["scanned_thought_count"] = scannedThoughts;
+                selection["scanned_link_count"] = scannedLinks;
+                selection["link_diagnostic_total"] = diagnosticTotal;
+                selection["link_diagnostics"] = diagnostics;
+                selection["link_diagnostics_truncated"] = diagnosticTotal > diagnostics.Count;
+                selection["link_diagnostic_counts"] = diagnosticReasons;
+                selection["ignored_semantic_link_counts"] = ignoredSemanticKinds;
+                selection["scope_note"] = "only live normal thoughts; type/tag/system assignments excluded; anomalous structural paths conservatively protected; diagnostic samples limited to 100 without truncating the plan";
+                selection["context"] = current.Snapshot;
+                return selection;
+            }
+            catch (Exception error)
+            {
+                error = Unwrap(error);
+                AdapterException refusal = error as AdapterException;
+                Dictionary<string, object> result = Map("success", false, "scope", "except_subtree", "complete", false,
+                    "code", refusal == null ? "native_error" : refusal.Code, "error", error.Message,
+                    "scanned_thought_count", scannedThoughts, "scanned_link_count", scannedLinks,
+                    "link_diagnostic_total", diagnosticTotal, "link_diagnostics", diagnostics,
+                    "link_diagnostics_truncated", diagnosticTotal > diagnostics.Count, "link_diagnostic_counts", diagnosticReasons,
+                    "ignored_semantic_link_counts", ignoredSemanticKinds);
+                try { result["context"] = Capture().Snapshot; }
+                catch { result["context"] = binding == null ? null : binding.Snapshot; }
+                return result;
+            }
+        }
+
+        private static string DeletionLinkExclusion(int kind, int meaning, int relation, bool deleted)
+        {
+            return deleted ? "soft_deleted_link" : kind != 1 ? "nonstructural_link_kind"
+                : meaning != 1 ? "nonstructural_link_meaning" : relation == 3 ? "jump_link"
+                : relation != 1 && relation != 2 ? "nonhierarchical_relation" : null;
+        }
+
+        private static void RecordDeletionLinkDiagnostic(List<Dictionary<string, object>> samples, SortedDictionary<string, int> counts,
+            string reason, object link, Guid a, Guid b, int kind, int meaning, int relation, Dictionary<Guid, int> liveKinds, HashSet<Guid> deletedIds)
+        {
+            int count;
+            counts.TryGetValue(reason, out count);
+            counts[reason] = count + 1;
+            int replacement = -1;
+            if (samples.Count >= 100)
+            {
+                // Prefer anomalous structural edges over routine type/tag samples, so
+                // a large set of assignments cannot hide the useful diagnostic IDs.
+                if (reason == "anomalous_structural_endpoint")
+                    for (int i = samples.Count - 1; i >= 0; i--)
+                        if (!String.Equals((string)samples[i]["reason"], reason, StringComparison.Ordinal)) { replacement = i; break; }
+                if (replacement < 0) return;
+            }
+            int kindA, kindB;
+            Dictionary<string, object> sample = Map("id", GuidValue(Property(link, "Id")).ToString(), "a", a.ToString(), "b", b.ToString(),
+                "kind", kind, "meaning", meaning, "relation", relation, "reason", reason,
+                "a_state", liveKinds.TryGetValue(a, out kindA) ? "live_kind_" + kindA.ToString(CultureInfo.InvariantCulture) : deletedIds.Contains(a) ? "soft_deleted" : "missing",
+                "b_state", liveKinds.TryGetValue(b, out kindB) ? "live_kind_" + kindB.ToString(CultureInfo.InvariantCulture) : deletedIds.Contains(b) ? "soft_deleted" : "missing");
+            if (replacement >= 0) samples[replacement] = sample;
+            else samples.Add(sample);
+        }
+
+        private static Dictionary<string, object> SelectDeletionThoughts(Dictionary<Guid, Dictionary<string, object>> thoughts,
+            Dictionary<Guid, List<Guid>> children, Guid preserve, Guid home, bool keepHome)
+        {
+            HashSet<Guid> closure = DeletionDescendants(children, preserve, null);
+            HashSet<Guid> ordinaryClosure = DeletionDescendants(children, preserve, new HashSet<Guid>(thoughts.Keys));
+            bool extraHome = keepHome && !closure.Contains(home);
+            List<Dictionary<string, object>> preserved = new List<Dictionary<string, object>>(), candidates = new List<Dictionary<string, object>>(),
+                conservative = new List<Dictionary<string, object>>();
+            int subtreeCount = 0;
+            foreach (KeyValuePair<Guid, Dictionary<string, object>> thought in thoughts)
+            {
+                bool inSubtree = closure.Contains(thought.Key);
+                if (inSubtree) subtreeCount++;
+                if (inSubtree && !ordinaryClosure.Contains(thought.Key)) conservative.Add(thought.Value);
+                (inSubtree || (keepHome && thought.Key == home) ? preserved : candidates).Add(thought.Value);
+            }
+            Comparison<Dictionary<string, object>> byId = delegate(Dictionary<string, object> a, Dictionary<string, object> b)
+                { return StringComparer.Ordinal.Compare((string)a["id"], (string)b["id"]); };
+            preserved.Sort(byId); candidates.Sort(byId); conservative.Sort(byId);
+            return Map("preserved_thoughts", preserved, "delete_candidates", candidates, "preserved_count", preserved.Count,
+                "candidate_count", candidates.Count, "subtree_preserved_count", subtreeCount, "extra_preserved_count", extraHome ? 1 : 0,
+                "keep_home", keepHome, "home_id", home.ToString(), "home_name", thoughts.ContainsKey(home) ? thoughts[home]["name"] : null,
+                "moves_home", thoughts.ContainsKey(home) && !closure.Contains(home) && !keepHome,
+                "conservative_preserved_count", conservative.Count, "conservative_preserved_thoughts", conservative,
+                "conservative_preservation_warning", conservative.Count > 0 ? "存在特殊、软删除或缺失节点组成的普通结构桥接路径；已保守保留其可达普通后代，未把这些节点列为删除候选。" : null);
+        }
+
+        private static HashSet<Guid> DeletionDescendants(Dictionary<Guid, List<Guid>> children, Guid root, HashSet<Guid> allowed)
+        {
+            HashSet<Guid> found = new HashSet<Guid>();
+            Queue<Guid> pending = new Queue<Guid>();
+            found.Add(root); pending.Enqueue(root);
+            while (pending.Count > 0)
+            {
+                List<Guid> list;
+                if (!children.TryGetValue(pending.Dequeue(), out list)) continue;
+                foreach (Guid child in list)
+                    if ((allowed == null || allowed.Contains(child)) && found.Add(child)) pending.Enqueue(child);
+            }
+            return found;
+        }
+
+        private static void StreamNativeEntities(object logic, string name, Guid brain, CancellationTokenSource cancellation, Action<object> collect)
+        {
+            MethodInfo stream = Method(logic, name, 4);
+            ParameterInfo[] parameters = stream.GetParameters();
+            Type action = parameters[2].ParameterType;
+            if (stream.ReturnType != typeof(void) || parameters[0].ParameterType != typeof(Guid)
+                || parameters[1].ParameterType != typeof(Guid) || !action.IsGenericType
+                || action.GetGenericTypeDefinition() != typeof(Action<>)
+                || parameters[3].ParameterType != typeof(CancellationTokenSource))
+                throw new AdapterException("native_error", "当前版本的全图读取接口签名不匹配，未生成删除计划。");
+            MethodInfo bridge = typeof(TheBrainAdapter).GetMethod("CreateCollector", BindingFlags.NonPublic | BindingFlags.Static)
+                .MakeGenericMethod(action.GetGenericArguments()[0]);
+            object callback = bridge.Invoke(null, new object[] { collect });
+            // This build's synchronous native stream paginates by Id in groups of 1000.
+            // Guid.Empty starts at the beginning, including disconnected components.
+            Invoke(stream, logic, new object[] { brain, Guid.Empty, callback, cancellation });
+            if (cancellation.IsCancellationRequested)
+                throw new AdapterException("deletion_plan_limit", "全图读取超时；未返回部分计划，也未执行删除。");
+        }
+
+        private static Action<T> CreateCollector<T>(Action<object> collect)
+        {
+            return delegate(T item) { collect(item); };
         }
 
         // Host-only final navigation: the caller must prove this UUID is a new
@@ -121,6 +370,8 @@ namespace Brainmind.Runtime
                     result = AddLink(binding, args, ref mutationAttempted);
                 else if (operation == "replace_note")
                     result = ReplaceNote(binding, args, ref mutationAttempted);
+                else if (operation == "delete_thoughts")
+                    result = DeleteThoughts(binding, args, ref mutationAttempted);
                 else
                     throw new AdapterException("unsupported_operation", "不支持的操作：" + operation);
 
@@ -136,6 +387,10 @@ namespace Brainmind.Runtime
                 Dictionary<string, object> response = Map("success", false, "operation", operation,
                     "code", refusal == null ? "native_error" : refusal.Code, "error", error.Message,
                     "mutation_attempted", mutationAttempted);
+                if(refusal != null && refusal.PartialResult != null) response["result"] = refusal.PartialResult;
+                else if(operation == "delete_thoughts") response["result"] = Map("deleted_count",0,"deleted_ids",new List<string>(),
+                    "deleted_links",0,"deleted_link_ids",new List<string>(),"unverified_mutation",mutationAttempted,
+                    "native_trash",true,"no_cascade",true);
                 // A native operation can fail after committing. Always expose this fact and a fresh
                 // readback; the controller must not blindly retry a failed mutation.
                 try { response["context"] = Capture().Snapshot; }
@@ -236,6 +491,312 @@ namespace Brainmind.Runtime
                     return Map("id", link["id"], "a", a.ToString(), "b", other.ToString(), "relation", relationName, "native_transaction", true);
             }
             throw new AdapterException("readback_mismatch", "原生连线调用返回后没有读取到目标关系，请检查脑图，不要自动重试。");
+        }
+
+        private static Dictionary<string,object> DeleteThoughts(Binding b, JsonElement args, ref bool attempted)
+        {
+            // A whole explicit set goes through the same native transaction
+            // used by the organizer. No recursive traversal is performed.
+            Guid preserve;
+            List<Guid> ids = ParseDeletionArguments(args,out preserve);
+            if(preserve != b.ThoughtId)
+                throw new AdapterException("validation_error","preserve_id 必须是当前活动根节点，不能指定其他保留节点。");
+            if(ids.Contains(preserve))
+                throw new AdapterException("validation_error","删除列表不能包含需要保留的当前根节点。");
+            // This is the read-only permission check used by the normal UI.
+            // Its message-producing wrappers must never be called by a tool.
+            if(!Convert.ToBoolean(Call(b.Context,"_x__x__xxx_x___x__x___x",new object[0]),CultureInfo.InvariantCulture))
+                throw new AdapterException("permission_denied","当前脑图没有原生写入权限，未执行删除。");
+            Dictionary<string,Dictionary<string,object>> oldLinks = new Dictionary<string,Dictionary<string,object>>(StringComparer.Ordinal);
+            Dictionary<Guid,object> oldAttachments = new Dictionary<Guid,object>();
+            foreach(Guid id in ids)
+            {
+                object target;
+                try { target = ReadNativeThought(b,id,false); }
+                catch(AdapterException) { throw new AdapterException("unknown_thought","删除列表包含当前脑图中不存在或不可读取的节点；未执行删除。"); }
+                RequireNormal(target);
+                RequireDeletionAttachmentsReady(b,id,2,oldAttachments);
+                Dictionary<string,object> graph = new Dictionary<string,object>();
+                ReadGraph(b,id,graph);
+                foreach(Dictionary<string,object> link in (List<Dictionary<string,object>>)graph["links"])
+                    if(Convert.ToString(link["a"]) == id.ToString() || Convert.ToString(link["b"]) == id.ToString())
+                        oldLinks[Convert.ToString(link["id"])] = link;
+            }
+            foreach(string linkId in oldLinks.Keys) RequireDeletionAttachmentsReady(b,Guid.Parse(linkId),3,oldAttachments);
+            // The native getter has a stable, build-pinned not-found result.
+            // Compare against it rather than treating an arbitrary read error
+            // (permission/storage failure) as evidence of successful deletion.
+            object missing = Call(b.Context,"__x___xx_x_xxx_xx_x_xx",new object[]{Guid.Empty});
+            string missingSignature = NativeErrorsSignature(missing);
+            if(String.IsNullOrEmpty(missingSignature) || OptionalProperty(missing,"Thought") != null)
+                throw new AdapterException("native_error","未能核验原生节点缺失回执，未执行删除。");
+            object logic = ProtectedProperty(b.Context,"__xxxxxxx____x___xxx");
+            Guid previousHome = ReadNativeHome(b,logic), currentHome = previousHome;
+            bool homeChanged = false;
+            bool migrationAttempted=false,homeVerified=true;
+            Action migrateHome=delegate
+            {
+            if(ids.Contains(previousHome))
+            {
+                // The UI protects its Home thought. Move Home to the explicitly retained
+                // active root through the native business service before deleting the old one.
+                // These are two native transactions; undoing deletion keeps a valid Home.
+                EnsureSameBinding(b);
+                RequireNormal(ReadNativeThought(b,preserve,false));
+                migrationAttempted = true;
+                try
+                {
+                    object homeReceipt = Call(logic,"___x_xx____x__xx____x__x",new object[]{b.BrainId,preserve});
+                    CheckNativeResult(homeReceipt);
+                    if(!Convert.ToBoolean(Call(homeReceipt,"_xxx___x_x__x_x__x_x__x_",new object[0]),CultureInfo.InvariantCulture))
+                        throw new AdapterException("native_error","原生 Home 迁移未返回成功，未删除节点。");
+                    currentHome = ReadNativeHome(b,logic);
+                    homeChanged = currentHome != previousHome;
+                    if(currentHome != preserve)
+                        throw new AdapterException("readback_mismatch","未能核验 Home 已迁移至保留节点，未删除节点。");
+                    RefreshNativeHome(b,preserve);
+                    EnsureSameBinding(b);
+                }
+                catch(Exception error)
+                {
+                    homeVerified = false;
+                    try
+                    {
+                        currentHome = ReadNativeHome(b,logic);
+                        homeChanged = currentHome != previousHome;
+                        homeVerified = true;
+                        RefreshNativeHome(b,currentHome);
+                    }
+                    catch { }
+                    AdapterException refusal = new AdapterException("native_error","Home 迁移没有完整核验成功，未删除任何节点。" + Unwrap(error).Message);
+                    refusal.PartialResult = Map("deleted_count",0,"deleted_ids",new List<string>(),"deleted_links",0,
+                        "deleted_link_ids",new List<string>(),"preserved_id",preserve.ToString(),"requested_count",ids.Count,
+                        "home_changed",homeChanged,"previous_home_id",previousHome.ToString(),
+                        "home_id",homeVerified ? (object)currentHome.ToString() : null,"home_verified",homeVerified,
+                        "modified_count",homeChanged ? 1 : 0,"home_migration_separate_transaction",true,
+                        "native_trash",true,"no_cascade",true,"unverified_mutation",!homeVerified);
+                    throw refusal;
+                }
+            }
+            };
+            Exception mutationError = null;
+            Dictionary<string,object> transaction = null;
+            try
+            {
+                EnsureSameBinding(b);
+                transaction = NativeDeletionTransaction.Execute(b.Context,logic,b.BrainId,ids,oldAttachments,migrateHome);
+                object nativeAttempted;
+                attempted=migrationAttempted || (transaction.TryGetValue("mutation_attempted",out nativeAttempted)
+                    && Convert.ToBoolean(nativeAttempted,CultureInfo.InvariantCulture));
+                object succeeded;
+                if(!transaction.TryGetValue("success",out succeeded) || !Convert.ToBoolean(succeeded,CultureInfo.InvariantCulture))
+                    throw new AdapterException(transaction.ContainsKey("code") ? Convert.ToString(transaction["code"]) : "native_error",
+                        transaction.ContainsKey("error") ? Convert.ToString(transaction["error"]) : "原生批量删除未返回成功，已停止后续操作。");
+            }
+            catch(Exception error) { mutationError = Unwrap(error); }
+
+            List<string> deleted = new List<string>();
+            List<string> unverified = new List<string>();
+            List<string> surviving = new List<string>();
+            foreach(Guid id in ids)
+            {
+                try
+                {
+                    object lookup = Call(b.Context,"__x___xx_x_xxx_xx_x_xx",new object[]{id});
+                    object thought = OptionalProperty(lookup,"Thought");
+                    if(thought != null)
+                    {
+                        if(OptionalProperty(thought,"DeletionDateTime") != null) deleted.Add(id.ToString());
+                        else surviving.Add(id.ToString());
+                    }
+                    else if(NativeErrorsSignature(lookup) == missingSignature) deleted.Add(id.ToString());
+                    else unverified.Add(id.ToString());
+                }
+                catch { unverified.Add(id.ToString()); }
+            }
+            HashSet<string> deletedSet = new HashSet<string>(deleted,StringComparer.Ordinal);
+            List<string> removedLinks = new List<string>();
+            foreach(KeyValuePair<string,Dictionary<string,object>> link in oldLinks)
+                if(deletedSet.Contains(Convert.ToString(link.Value["a"])) || deletedSet.Contains(Convert.ToString(link.Value["b"])))
+                    removedLinks.Add(link.Key);
+            removedLinks.Sort(StringComparer.Ordinal);
+            HashSet<Guid> remainingAttachments=new HashSet<Guid>();
+            HashSet<string> checkedSources=new HashSet<string>(StringComparer.Ordinal);
+            HashSet<Guid> unverifiedAttachments=new HashSet<Guid>();
+            foreach(object attachment in oldAttachments.Values)
+            {
+                Guid source=GuidValue(Property(attachment,"SourceId"));
+                int sourceKind=Convert.ToInt32(Property(attachment,"SourceType"),CultureInfo.InvariantCulture);
+                string sourceKey=source.ToString()+":"+sourceKind.ToString(CultureInfo.InvariantCulture);
+                if(!checkedSources.Add(sourceKey)) continue;
+                try
+                {
+                    MethodInfo list=Method(b.Context,"_x_x__xx___x_xxxxxxx",2);
+                    object lookup=Invoke(list,b.Context,new object[]{source,Enum.ToObject(list.GetParameters()[1].ParameterType,sourceKind)});
+                    CheckNativeResult(lookup);
+                    IEnumerable actual=Property(Property(lookup,"Data"),"Attachments") as IEnumerable;
+                    if(actual == null) throw new AdapterException("native_error","删除后附件列表没有回执。");
+                    foreach(object item in actual) remainingAttachments.Add(GuidValue(Property(item,"Id")));
+                }
+                catch
+                {
+                    bool sourceDeleted=sourceKind == 2 ? deletedSet.Contains(source.ToString()) : removedLinks.Contains(source.ToString());
+                    if(!sourceDeleted)
+                        foreach(KeyValuePair<Guid,object> original in oldAttachments)
+                            if(GuidValue(Property(original.Value,"SourceId")) == source) unverifiedAttachments.Add(original.Key);
+                }
+            }
+            List<string> deletedAttachments=new List<string>(),unverifiedAttachmentIds=new List<string>();
+            foreach(Guid id in oldAttachments.Keys)
+                if(unverifiedAttachments.Contains(id)) unverifiedAttachmentIds.Add(id.ToString());
+                else if(!remainingAttachments.Contains(id)) deletedAttachments.Add(id.ToString());
+            deletedAttachments.Sort(StringComparer.Ordinal);
+            unverifiedAttachmentIds.Sort(StringComparer.Ordinal);
+            Dictionary<string,object> result = Map("deleted_count",deleted.Count,"deleted_ids",deleted,
+                "deleted_links",removedLinks.Count,"deleted_link_ids",removedLinks,"preserved_id",preserve.ToString(),
+                "requested_count",ids.Count,"remaining_ids",surviving,"unverified_ids",unverified,
+                "native_transaction",true,"native_trash",true,"no_cascade",true,
+                "home_changed",homeChanged,"previous_home_id",previousHome.ToString(),"home_id",currentHome.ToString(),
+                "home_verified",homeVerified,"modified_count",homeChanged ? 1 : 0,
+                "home_migration_separate_transaction",homeChanged,"native_transaction_count",homeChanged ? 2 : 1,
+                "attachments_before",oldAttachments.Count,"deleted_attachments",deletedAttachments.Count,
+                "deleted_attachment_ids",deletedAttachments,"unverified_attachment_ids",unverifiedAttachmentIds,
+                "unverified_mutation",unverified.Count > 0 || unverifiedAttachments.Count > 0 || mutationError != null);
+            if(transaction != null)
+                foreach(KeyValuePair<string,object> field in transaction)
+                    if(field.Key != "success" && field.Key != "code" && field.Key != "error") result[field.Key]=field.Value;
+            try
+            {
+                EnsureSameBinding(b);
+                RequireNormal(ReadNativeThought(b,preserve,false));
+                RefreshCurrentGraph(b);
+                if(homeChanged)
+                {
+                    homeVerified=false;
+                    result["home_verified"] = false;
+                    Guid verifiedHome = ReadNativeHome(b,logic);
+                    result["home_id"] = verifiedHome.ToString();
+                    homeVerified=verifiedHome == preserve;
+                    result["home_verified"] = homeVerified;
+                    if(verifiedHome != preserve)
+                        throw new AdapterException("readback_mismatch","删除后 Home 未保持在保留节点，请核对已完成部分。");
+                }
+            }
+            catch(Exception error) { if(mutationError == null) mutationError = Unwrap(error); }
+            if(mutationError != null || deleted.Count != ids.Count || unverifiedAttachments.Count > 0)
+            {
+                AdapterException nativeFailure=mutationError as AdapterException;
+                AdapterException refusal = new AdapterException(nativeFailure == null ? "native_error" : nativeFailure.Code,"原生删除没有完整核验成功；已确认删除 " + deleted.Count
+                    + " 个节点，已停止后续操作，请核对已完成部分。不会自动重试。"
+                    + (mutationError == null ? "" : " 原因：" + mutationError.Message));
+                object helperUnknown;
+                bool transactionUnknown=transaction == null ? attempted
+                    : (!transaction.TryGetValue("unverified_mutation",out helperUnknown) || Convert.ToBoolean(helperUnknown,CultureInfo.InvariantCulture));
+                result["unverified_mutation"] = transactionUnknown || unverified.Count > 0 || unverifiedAttachments.Count > 0 || !homeVerified;
+                refusal.PartialResult = result;
+                throw refusal;
+            }
+            return result;
+        }
+
+        private static Guid ReadNativeHome(Binding b,object logic)
+        {
+            object settingsResult = Call(logic,"__x___x__xxxxxx_xx__x_x",new object[]{b.BrainId});
+            CheckNativeResult(settingsResult);
+            if(!Convert.ToBoolean(Call(settingsResult,"_xxx___x_x__x_x__x_x__x_",new object[0]),CultureInfo.InvariantCulture))
+                throw new AdapterException("native_error","无法读取当前脑图的原生 Home 设置，未继续删除。");
+            return GuidValue(Property(Property(settingsResult,"BrainSettings"),"_____x_xx_x__xxx_xx__xxx"));
+        }
+
+        private static void RefreshNativeHome(Binding b,Guid expected)
+        {
+            object view = Property(b.Context,"_x_x_xxx__xx__xx__x_xxx_");
+            // Reload settings and their metadata cache through the client's native refresh.
+            // This keeps Navigate.Home and reopening the brain consistent without setting entities.
+            Call(view,"_xxx_x_x__xxxxxxxx__x__x",new object[0]);
+            Guid viewHome = GuidValue(Property(Property(view,"_x__x_____xx_xx__xxxxx"),"_____x_xx_x__xxx_xx__xxx"));
+            Guid metadataHome = GuidValue(Property(Property(view,"___x_x_x_____x______x__x"),"__x___x__xxx__x_xx__x_x"));
+            if(viewHome != expected || metadataHome != expected)
+                throw new AdapterException("readback_mismatch","原生 Home 设置与当前会话缓存不一致，未继续删除。");
+        }
+
+        private static List<Guid> ParseDeletionArguments(JsonElement args,out Guid preserve)
+        {
+            HashSet<string> required = new HashSet<string>(new string[]{"ids","preserve_id"},StringComparer.Ordinal);
+            foreach(JsonProperty field in args.EnumerateObject())
+                if(!required.Remove(field.Name)) throw new AdapterException("validation_error","删除参数包含未知或重复字段。");
+            if(required.Count != 0) throw new AdapterException("validation_error","删除参数必须包含 ids 和 preserve_id。");
+            preserve = IdArgument(args,"preserve_id");
+            JsonElement array = args.GetProperty("ids");
+            if(array.ValueKind != JsonValueKind.Array || array.GetArrayLength() < 1 || array.GetArrayLength() > 40)
+                throw new AdapterException("validation_error","一次删除必须明确指定 1 到 40 个节点 UUID。");
+            List<Guid> result = new List<Guid>();
+            HashSet<Guid> seen = new HashSet<Guid>();
+            foreach(JsonElement item in array.EnumerateArray())
+            {
+                if(item.ValueKind != JsonValueKind.String) throw new AdapterException("validation_error","ids 只能包含 UUID 字符串。");
+                Guid id = ParseId(item.GetString(),"ids");
+                if(!seen.Add(id)) throw new AdapterException("validation_error","删除列表不能包含重复 UUID。");
+                result.Add(id);
+            }
+            return result;
+        }
+
+        private static string NativeErrorsSignature(object result)
+        {
+            IEnumerable errors = OptionalProperty(result,"Errors") as IEnumerable;
+            if(errors == null) return null;
+            List<string> values = new List<string>();
+            foreach(object error in errors) values.Add(StringValue(error));
+            return values.Count == 0 ? null : JsonSerializer.Serialize(values);
+        }
+
+        private static void RequireDeletionAttachmentsReady(Binding b,Guid source,int sourceKind,Dictionary<Guid,object> collected)
+        {
+            MethodInfo list = Method(b.Context,"_x_x__xx___x_xxxxxxx",2);
+            object lookup = Invoke(list,b.Context,new object[]{source,Enum.ToObject(list.GetParameters()[1].ParameterType,sourceKind)});
+            CheckNativeResult(lookup);
+            object data = Property(lookup,"Data");
+            IEnumerable attachments = data == null ? null : Property(data,"Attachments") as IEnumerable;
+            if(attachments == null) throw new AdapterException("native_error","未能核验待删除节点或关系的附件，未执行删除。");
+            foreach(object attachment in attachments)
+            {
+                Guid attachmentId=GuidValue(Property(attachment,"Id"));
+                if(attachmentId == Guid.Empty || GuidValue(Property(attachment,"BrainId")) != b.BrainId
+                    || GuidValue(Property(attachment,"SourceId")) != source
+                    || Convert.ToInt32(Property(attachment,"SourceType"),CultureInfo.InvariantCulture) != sourceKind)
+                    throw new AdapterException("native_error","待删除附件的原生身份或来源不一致，未执行删除。");
+                collected[attachmentId]=attachment;
+                string kind = Convert.ToString(Property(attachment,"Type"));
+                // Exact file/directory kinds checked by OrganizerContext's
+                // normal deletion wrapper. Inline notes and external reference
+                // records follow the native transaction's own normal handling.
+                if(kind != "______xxxxx____x_x_____" && kind != "__x___x_xxxx_xxxx_x___") continue;
+                object resolver = ProtectedProperty(b.Context,"_x___xx_xx___x_xxxxxx__x");
+                string path = Convert.ToString(Call(resolver,"__x__xxxx___x_x__x_x_x__",new object[]{attachment}));
+                object ready = Invoke(ProtectedMethod(b.Context,"_x__x_xxx_xxxx_xxx__x_x",3),b.Context,new object[]{path,false,false});
+                if(!String.Equals(Convert.ToString(ready),"Ready",StringComparison.Ordinal))
+                    throw new AdapterException("attachment_not_ready","待删除节点或关系包含被占用、只读或不可处理的文件附件（"
+                        + Convert.ToString(ready) + "）；未删除任何节点。请先在 TheBrain 中处理该附件状态。");
+            }
+        }
+
+        private static MethodInfo ProtectedMethod(object value,string name,int count)
+        {
+            for(Type type = value.GetType(); type != null; type = type.BaseType)
+                foreach(MethodInfo method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                    if(method.Name == name && method.GetParameters().Length == count) return method;
+            throw new MissingMethodException(value.GetType().FullName,name);
+        }
+
+        private static object ProtectedProperty(object value,string name)
+        {
+            for(Type type = value.GetType(); type != null; type = type.BaseType)
+            {
+                PropertyInfo property = type.GetProperty(name,BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if(property != null) return property.GetValue(value,null);
+            }
+            throw new MissingMemberException(value.GetType().FullName,name);
         }
 
         private static Dictionary<string, object> ReplaceNote(Binding b, JsonElement args, ref bool attempted)

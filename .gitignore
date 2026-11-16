@@ -2,6 +2,7 @@
 /work/
 /dist/
 /publish/
+/output/
 /build/*/staging/
 /build/**/*.rsp
 /build/**/*.log

@@ -111,13 +111,13 @@ try {
     if (@(Get-Process -Name TheBrain -ErrorAction SilentlyContinue).Count -gt 0) {
         throw 'TheBrain is already running. Close it normally, then launch Brainmind so the startup hook can be applied. No running process was changed.'
     }
-    $RuntimePath = Join-Path $BrainmindRoot 'build\0.3.0\Brainmind.Runtime.dll'
-    $ManifestPath = Join-Path $BrainmindRoot 'build\0.3.0\manifest.json'
+    $RuntimePath = Join-Path $BrainmindRoot 'build\0.5.0\Brainmind.Runtime.dll'
+    $ManifestPath = Join-Path $BrainmindRoot 'build\0.5.0\manifest.json'
     if (-not (Test-Path -LiteralPath $RuntimePath -PathType Leaf) -or -not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
         throw 'Brainmind runtime is not built. Run python tools/brainmind.py build --app <TheBrain.exe> from the source package, or use the built release package.'
     }
     $Manifest = Read-BrainmindJson $ManifestPath
-    if ($Manifest.target_version -ne '14.0.102.0' -or $Manifest.runtime_version -ne '0.3.0' -or $Manifest.runtime_file -ne 'Brainmind.Runtime.dll') { throw 'Unsupported Brainmind build manifest.' }
+    if ($Manifest.target_version -ne '14.0.102.0' -or $Manifest.runtime_version -ne '0.5.0' -or $Manifest.runtime_file -ne 'Brainmind.Runtime.dll') { throw 'Unsupported Brainmind build manifest.' }
     if ((Get-BrainmindHash $RuntimePath) -ne $Manifest.runtime_sha256) { throw 'Brainmind runtime hash does not match build/manifest.json. Rebuild the source package.' }
     $SupportedPath = Join-Path $BrainmindRoot 'config\supported-build.json'
     if ((Get-BrainmindHash $SupportedPath) -ne $Manifest.supported_build_sha256) { throw 'Supported-build configuration has changed. Rebuild the source package.' }

@@ -22,7 +22,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.3.0"
+VERSION = "0.5.0"
 BUILD = ROOT / "build" / VERSION
 SUPPORTED = ROOT / "config/supported-build.json"
 
@@ -325,6 +325,10 @@ def live_command(args):
         request["operation"] = "get_context"
     elif args.command == "read":
         request = {"operation": "read_thought", "id": args.id}
+    elif args.command == "deletion-plan":
+        request = {"operation":"get_deletion_plan", "preserve_id":args.id}
+        if args.keep_home:
+            request["keep_home"] = True
     elif args.command == "panel":
         request["action"] = args.action
     elif args.command == "execute":
@@ -353,7 +357,7 @@ def live_command(args):
                    "page_start": args.page_start, "page_end": args.page_end or args.page_start}
     elif args.command == "settings":
         settings = {}
-        for field, value in (("base_url", args.base_url), ("model", args.model), ("timeout_seconds", args.model_timeout)):
+        for field, value in (("base_url", args.base_url), ("model", args.model), ("protocol", args.protocol), ("timeout_seconds", args.model_timeout)):
             if value is not None:
                 settings[field] = value
         if args.api_key_env:
@@ -367,16 +371,25 @@ def live_command(args):
     if timeout <= 0:
         raise RuntimeError("--timeout must be positive.")
     pid = select_pid(args)
-    if args.command in ("attach", "attachments", "remove-attachment", "clear-attachments", "read-attachment", "generate-map", "diagnostics"):
+    if args.command == "execute" and args.tool == "delete_thoughts":
+        status = pipe_request(pid, {"operation":"ping"}, min(timeout,5))
+        version = str(status.get("result",{}).get("runtime_version","0.0.0"))
+        try:
+            parts = tuple(int(part) for part in version.split("."))
+        except ValueError:
+            parts = (0,)
+        if parts < (0,4,0):
+            raise RuntimeError("删除节点需要 Brainmind 0.4.0 或更高版本。请正常关闭旧会话，再使用新版启动器打开。")
+    if args.command in ("attach", "attachments", "remove-attachment", "clear-attachments", "read-attachment", "generate-map", "diagnostics", "deletion-plan"):
         status = pipe_request(pid, {"operation": "ping"}, min(timeout, 5))
         version = str(status.get("result", {}).get("runtime_version", "0.0.0"))
         try:
             current = tuple(int(p) for p in version.split("."))
         except ValueError:
             current = (0,)
-        required = (0, 3, 0) if args.command in ("generate-map", "diagnostics") else (0, 2, 0)
+        required = ((0,4,2) if args.keep_home else (0,4,1)) if args.command == "deletion-plan" else (0, 3, 0) if args.command in ("generate-map", "diagnostics") else (0, 2, 0)
         if current < required:
-            raise RuntimeError("当前会话版本尚不支持此命令。请正常关闭 TheBrain，再通过 Brainmind 0.3.0 的启动器重新打开；不会自动关闭你的工作。")
+            raise RuntimeError("当前会话版本尚不支持此命令。请正常关闭 TheBrain，再通过 Brainmind 0.5.0 的启动器重新打开；不会自动关闭你的工作。")
     return pipe_request(pid, request, timeout)
 
 
@@ -392,17 +405,19 @@ def parser():
     globals_for(result)
     sub = result.add_subparsers(dest="command", required=True)
     for command in ("build", "launch", "sessions", "context", "read", "panel", "execute", "chat", "cancel", "settings",
-                    "attach", "attachments", "remove-attachment", "clear-attachments", "read-attachment", "generate-map", "diagnostics"):
+                    "attach", "attachments", "remove-attachment", "clear-attachments", "read-attachment", "generate-map", "diagnostics", "deletion-plan"):
         p = sub.add_parser(command)
         globals_for(p, True)
         if command in ("build", "launch"):
             p.add_argument("--app", help="TheBrain.exe or installation directory")
-        elif command == "read":
+        elif command in ("read", "deletion-plan"):
             p.add_argument("id", help="Thought ID from the current brain")
+            if command == "deletion-plan":
+                p.add_argument("--keep-home", action="store_true", help="Also retain Home itself, without retaining its other branches (0.5.0+)")
         elif command == "panel":
             p.add_argument("action", choices=("status", "show", "hide", "collapse", "expand"))
         elif command == "execute":
-            p.add_argument("tool", choices=("create_thought", "rename_thought", "add_link", "replace_note"))
+            p.add_argument("tool", choices=("create_thought", "rename_thought", "add_link", "replace_note", "delete_thoughts"))
             group = p.add_mutually_exclusive_group(required=True)
             group.add_argument("--arguments", help="JSON argument object")
             group.add_argument("--arguments-file", type=Path, help="UTF-8 JSON argument object file")
@@ -422,6 +437,7 @@ def parser():
             p.add_argument("--base-url")
             p.add_argument("--model")
             p.add_argument("--model-timeout", type=int, choices=range(1, 601), metavar="1..600")
+            p.add_argument("--protocol", choices=("auto", "chat_completions", "responses", "anthropic"), help="API wire protocol (auto preserves existing settings)")
             group = p.add_mutually_exclusive_group()
             group.add_argument("--api-key-env", help="Read API key from this environment variable; never print it")
             group.add_argument("--clear-key", action="store_true")

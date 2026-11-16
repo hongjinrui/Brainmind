@@ -38,6 +38,7 @@ namespace Brainmind.Runtime
         private readonly ChatTextEntry input;
         private readonly TextEntry endpoint;
         private readonly TextEntry model;
+        private readonly ComboBox protocol;
         private readonly PasswordEntry apiKey;
         private readonly Button sendButton;
         private readonly Button createMapButton;
@@ -124,6 +125,18 @@ namespace Brainmind.Runtime
             endpoint.Name = "Brainmind_Endpoint";
             endpoint.PlaceholderText = "https://服务地址/v1";
             configuration.PackStart(endpoint);
+            configuration.PackStart(new Label("接口协议"));
+            protocol = new ComboBox();
+            protocol.Name = "Brainmind_Protocol";
+            protocol.Items.Add("自动");
+            protocol.Items.Add("Chat Completions");
+            protocol.Items.Add("Responses");
+            protocol.Items.Add("Anthropic Messages");
+            protocol.SelectedIndex = 0;
+            protocol.TooltipText = "按服务选择协议；CC Switch 可使用 Anthropic Messages 或 Responses 入口。";
+            protocol.MinWidth = 0;
+            protocol.ExpandHorizontal = true;
+            configuration.PackStart(protocol);
             configuration.PackStart(new Label("模型"));
             model = new TextEntry();
             model.Name = "Brainmind_Model";
@@ -171,9 +184,9 @@ namespace Brainmind.Runtime
             fileScroll.VerticalScrollPolicy = ScrollPolicy.Automatic;
             fileList = new Expander();
             fileList.Name = "Brainmind_Files";
-            fileList.Label = "聊天文件 (0/5)";
+            fileList.Label = "聊天资料 (0/5)：未添加";
             fileList.Content = fileScroll;
-            fileList.Visible = false;
+            fileList.Visible = true;
             body.PackStart(fileList);
 
             input = new ChatTextEntry();
@@ -231,6 +244,7 @@ namespace Brainmind.Runtime
             };
             viewport.VisibleRectChanged += delegate { ConstrainPanelWidth(); };
             ConstrainPanelWidth();
+            RenderFiles();
             try { ReloadConfiguration(); }
             catch (Exception error)
             {
@@ -266,6 +280,14 @@ namespace Brainmind.Runtime
         public bool IsAttached { get { return attached && !windowClosed; } }
         public bool IsBusy { get { return busy || preparing; } }
         public bool IsCollapsed { get { return collapsed; } }
+        public void SetRuntimeVersion(string version)
+        {
+            Ui(delegate { if(!windowClosed) title.Text = "Brainmind AI · " + version; });
+        }
+        public int SelectedFileCount { get { return UiResult<int>(delegate { return files.Count; }); } }
+        public int UnreadableFileCount { get { return UiResult<int>(delegate {
+            int count = 0; foreach(ChatFileInfo file in files) if(file.State == "error") count++; return count;
+        }); } }
         public bool HasMenuEntry { get { return menuContainer != null && menuRoot != null && menuContainer.Items.Contains(menuRoot); } }
 
         public void ConfigureAttachments(Func<string[], CancellationToken, Task<ChatFileInfo[]>> prepare, Action<string> remove)
@@ -470,8 +492,10 @@ namespace Brainmind.Runtime
             fileRows.Clear();
             fileRemoveButtons.Clear();
             foreach (Widget widget in previous) widget.Dispose();
-            fileList.Visible = files.Count > 0;
-            fileList.Label = "聊天文件 (" + files.Count + "/5)";
+            fileList.Visible = true;
+            int ready = 0;
+            foreach(ChatFileInfo item in files) if(item.State == "ready") ready++;
+            fileList.Label = "聊天资料 (" + files.Count + "/5)：" + (files.Count == 0 ? "未添加" : ready + " 个就绪");
             foreach (ChatFileInfo file in files)
             {
                 HBox row = new HBox();
@@ -485,7 +509,7 @@ namespace Brainmind.Runtime
                 name.Wrap = WrapMode.Word;
                 name.WidthRequest = 255;
                 details.PackStart(name);
-                string state = file.State == "ready" ? "就绪" : file.State == "reading" ? "读取中" : "未读取";
+                string state = file.State == "ready" ? "就绪" : file.State == "reading" ? "读取中" : "读取失败";
                 Label description = new Label(state + (String.IsNullOrEmpty(file.Message) ? "" : " · " + file.Message));
                 description.Wrap = WrapMode.Word;
                 description.WidthRequest = 255;
@@ -504,9 +528,10 @@ namespace Brainmind.Runtime
                 row.PackEnd(remove);
                 fileRows.PackStart(row);
             }
-            if (files.Count > 0)
             {
-                Label hint = new Label("用于当前聊天；发送后保留，可随时移除。");
+                Label hint = new Label(files.Count == 0
+                    ? "尚未添加聊天资料。请点“添加文件”；节点附件不会自动传入聊天。新窗口或重启后需重新添加。"
+                    : "资料保留在本窗口，切换脑图仍可使用；新窗口或重启后需重新添加，可随时移除。");
                 hint.Wrap = WrapMode.Word;
                 hint.WidthRequest = 315;
                 fileRows.PackStart(hint);
@@ -746,6 +771,8 @@ namespace Brainmind.Runtime
             Dictionary<string, string> values = loadConfig == null ? new Dictionary<string, string>() : loadConfig();
             if (values == null) values = new Dictionary<string, string>();
             endpoint.Text = Value(values, "base_url");
+            string configuredProtocol = Value(values, "protocol").Trim().ToLowerInvariant();
+            protocol.SelectedIndex = configuredProtocol == "chat_completions" ? 1 : configuredProtocol == "responses" ? 2 : configuredProtocol == "anthropic" ? 3 : 0;
             model.Text = Value(values, "model");
             apiKey.Password = Value(values, "api_key");
             settings.Expanded = String.IsNullOrWhiteSpace(endpoint.Text) || String.IsNullOrWhiteSpace(model.Text);
@@ -755,6 +782,7 @@ namespace Brainmind.Runtime
         {
             RequireUiThread();
             return new Dictionary<string, string> { { "base_url", endpoint.Text.Trim() },
+                { "protocol", protocol.SelectedIndex == 1 ? "chat_completions" : protocol.SelectedIndex == 2 ? "responses" : protocol.SelectedIndex == 3 ? "anthropic" : "auto" },
                 { "model", model.Text.Trim() }, { "api_key", apiKey.Password ?? "" } };
         }
 
@@ -794,7 +822,7 @@ namespace Brainmind.Runtime
             {
                 if (createMap == null || !HasReadyFiles())
                 {
-                    string error = createMap == null ? "生成脑图功能尚未就绪" : "请先添加并读取至少一个资料文件";
+                    string error = createMap == null ? "生成脑图功能尚未就绪" : UnreadableSourceMessage() ?? "请先添加并读取至少一个资料文件";
                     if (!windowClosed) status.Text = error;
                     completion.TrySetException(new InvalidOperationException(error));
                     return;
@@ -830,7 +858,7 @@ namespace Brainmind.Runtime
             if (busy || preparing || windowClosed) return;
             string message = input.Text;
             if (String.IsNullOrWhiteSpace(message)) return;
-            input.Text = "";
+            if (HasReadyFiles() || UnreadableSourceMessage() == null) input.Text = "";
             // Display errors in the pane and observe the button path's task as well.
             SubmitAsync(message).ContinueWith(delegate(Task<string> failed)
             {
@@ -849,12 +877,29 @@ namespace Brainmind.Runtime
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
 
+        private string UnreadableSourceMessage()
+        {
+            StringBuilder details = new StringBuilder();
+            foreach(ChatFileInfo file in files)
+                if(file.State == "error") details.AppendLine((file.Name ?? "文件") + "：" + (file.Message ?? "读取失败"));
+            return details.Length == 0 ? null : "资料已添加，但没有读取成功：\n" + details
+                + "请先处理上述原因后重新添加，或移除失败文件后继续普通聊天。本次未调用模型，也未执行脑图操作。";
+        }
+
         private async void StartSend(string message, TaskCompletionSource<string> completion, Func<string, Task<string>> action, bool map)
         {
             if (windowClosed) { completion.TrySetException(new InvalidOperationException("聊天窗口已关闭")); return; }
             if (preparing) { completion.TrySetException(new InvalidOperationException("文件正在读取，请等待完成后发送")); return; }
             if (busy) { completion.TrySetException(new InvalidOperationException("上一条请求尚未完成")); return; }
             if (String.IsNullOrWhiteSpace(message)) { completion.TrySetException(new ArgumentException("请输入要求")); return; }
+            string sourceFailure = HasReadyFiles() ? null : UnreadableSourceMessage();
+            if (sourceFailure != null)
+            {
+                AppendMessage("资料",sourceFailure);
+                status.Text = "资料读取失败，未发送给模型";
+                completion.TrySetException(new InvalidOperationException(sourceFailure));
+                return;
+            }
             cancelRequested = false;
             SetBusyCore(true);
             AppendMessage("user", map ? "生成脑图：\n" + message : message);

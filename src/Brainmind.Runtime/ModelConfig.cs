@@ -13,6 +13,7 @@ namespace Brainmind.Runtime
         public string BaseUrl { get; set; }
         public string Model { get; set; }
         public string ApiKey { get; set; }
+        public string Protocol { get; set; }
         public int TimeoutSeconds { get; set; }
 
         public ModelConfig()
@@ -20,6 +21,7 @@ namespace Brainmind.Runtime
             BaseUrl = "https://api.openai.com/v1";
             Model = "";
             ApiKey = "";
+            Protocol = "auto";
             TimeoutSeconds = 120;
         }
 
@@ -39,6 +41,7 @@ namespace Brainmind.Runtime
                 JsonElement value;
                 if (root.TryGetProperty("base_url", out value)) result.BaseUrl = value.GetString() ?? "";
                 if (root.TryGetProperty("model", out value)) result.Model = value.GetString() ?? "";
+                if (root.TryGetProperty("protocol", out value)) result.Protocol = value.GetString() ?? "auto";
                 if (root.TryGetProperty("timeout_seconds", out value)) result.TimeoutSeconds = value.GetInt32();
                 if (root.TryGetProperty("api_key_dpapi", out value) && !String.IsNullOrEmpty(value.GetString()))
                     result.ApiKey = Unprotect(value.GetString());
@@ -57,6 +60,7 @@ namespace Brainmind.Runtime
                 version = 1,
                 base_url = BaseUrl ?? "",
                 model = Model ?? "",
+                protocol = NormalizedProtocol(),
                 timeout_seconds = TimeoutSeconds,
                 api_key_dpapi = encrypted
             }, new JsonSerializerOptions { WriteIndented = true });
@@ -71,6 +75,33 @@ namespace Brainmind.Runtime
 
         internal Uri CompletionEndpoint()
         {
+            return EndpointFor("chat_completions");
+        }
+
+        internal Uri ResponsesEndpoint()
+        {
+            return EndpointFor("responses");
+        }
+
+        internal Uri MessagesEndpoint()
+        {
+            return EndpointFor("anthropic");
+        }
+
+        internal string NormalizedProtocol()
+        {
+            string protocol = String.IsNullOrWhiteSpace(Protocol) ? "auto" : Protocol.Trim().ToLowerInvariant();
+            if (protocol != "auto" && protocol != "chat_completions" && protocol != "responses" && protocol != "anthropic")
+                throw new InvalidOperationException("Model protocol must be auto, chat_completions, responses or anthropic.");
+            return protocol;
+        }
+
+        internal Uri EndpointFor(string protocol)
+        {
+            protocol = (protocol ?? "").Trim().ToLowerInvariant();
+            if (protocol != "chat_completions" && protocol != "responses" && protocol != "anthropic")
+                throw new InvalidOperationException("A request endpoint requires chat_completions, responses or anthropic protocol.");
+            NormalizedProtocol();
             Uri uri;
             if (String.IsNullOrWhiteSpace(BaseUrl) || !Uri.TryCreate(BaseUrl.Trim(), UriKind.Absolute, out uri)
                 || (uri.Scheme != "http" && uri.Scheme != "https")
@@ -87,7 +118,19 @@ namespace Brainmind.Runtime
             if (uri.Scheme == "http" && !uri.IsLoopback && !String.IsNullOrEmpty(ApiKey))
                 throw new InvalidOperationException("An API key requires HTTPS except for a loopback local model.");
             string url = uri.AbsoluteUri.TrimEnd('/');
-            return new Uri(url.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase) ? url : url + "/chat/completions");
+            string suffix = protocol == "responses" ? "/responses" : protocol == "anthropic" ? "/messages" : "/chat/completions";
+            if (url.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) return new Uri(url);
+            // A complete endpoint is also accepted. Switching protocol replaces its
+            // final route while preserving its explicit version or custom prefix.
+            if (url.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+                url = url.Substring(0, url.Length - "/chat/completions".Length);
+            else if (url.EndsWith("/responses", StringComparison.OrdinalIgnoreCase))
+                url = url.Substring(0, url.Length - "/responses".Length);
+            else if (url.EndsWith("/messages", StringComparison.OrdinalIgnoreCase))
+                url = url.Substring(0, url.Length - "/messages".Length);
+            else if (String.IsNullOrEmpty(uri.AbsolutePath.Trim('/')))
+                url += "/v1";
+            return new Uri(url + suffix);
         }
 
         [StructLayout(LayoutKind.Sequential)]
